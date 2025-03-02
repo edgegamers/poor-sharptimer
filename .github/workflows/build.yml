@@ -40,14 +40,27 @@ jobs:
       - name: Publish the project
         run: dotnet publish --configuration Release --output ./publish SharpTimer.csproj
 
+      - name: Set version tag and zip file name
+        id: version
+        run: |
+          VERSION="v1.0.${{ github.run_number }}"
+          if [[ $GITHUB_REF == 'refs/heads/dev' ]]; then
+            TAG="Prerelease $VERSION"
+          else
+            TAG="$VERSION"
+          fi
+          ZIP_NAME="SharpTimer_${VERSION}.zip"
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+
       - name: Zip published files
-        run: zip -r ./publish.zip ./publish
+        run: zip -r ${{ env.ZIP_NAME }} ./publish
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.16.0
         with:
-          artifacts: ./publish.zip
+          artifacts: ${{ env.ZIP_NAME }}
           prerelease: ${{ contains(github.ref, 'dev') }}
-          tag: v1.0.${{ github.run_number }}
+          tag: ${{ env.TAG }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
