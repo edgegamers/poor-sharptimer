@@ -57,7 +57,7 @@ jobs:
         run: |
           mkdir -p publish/addons/counterstrikesharp/plugins/SharpTimer/
           find ./publish -mindepth 1 -maxdepth 1 ! -name 'cfg' ! -name 'lang' -exec mv {} publish/addons/counterstrikesharp/plugins/SharpTimer/ \;
-          find ./publish -mindepth 1 -type d -exec zip -r ${{ env.ZIP_NAME }} {} +
+          find ./publish -mindepth 1 -maxdepth 1 -type d -exec zip -r ${{ env.ZIP_NAME }} ./publish/{} +
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.16.0
