@@ -36,7 +36,6 @@ jobs:
         uses: ncipollo/release-action@v1.16.0
         with:
           artifacts: ./publish/**
-          tag: ${{ github.ref }}
           prerelease: ${{ contains(github.ref, 'dev') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
