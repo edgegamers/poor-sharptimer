@@ -33,13 +33,10 @@ jobs:
         run: dotnet publish --configuration Release --output ./publish
 
       - name: Create GitHub Release
-        uses: comnoco/create-release@v2
+        uses: ncipollo/release-action@v1.16.0
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          release_name: "Release v1.0.${{ github.run_number }}"
-          body: "Automated release for version v1.0.${{ github.run_number }}"
-          files: ./publish/*
-          draft: false
-          prerelease: ${{ github.ref == 'refs/heads/dev' }}
+          artifacts: ./publish/**
+          tag: ${{ github.ref }}
+          prerelease: ${{ contains(github.ref, 'dev') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
