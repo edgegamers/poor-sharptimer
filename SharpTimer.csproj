@@ -17,6 +17,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include=".github\workflows\build.yml" />
+    <Content Include="lang\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>lang\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
   <Target Name="Date" BeforeTargets="BeforeBuild">
