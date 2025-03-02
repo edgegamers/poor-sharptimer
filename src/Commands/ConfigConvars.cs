@@ -31,7 +31,7 @@ namespace SharpTimer
             try {
                 culture = CultureInfo.CreateSpecificCulture("en-US");
             } catch (CultureNotFoundException e) {
-                SharpTimerConPrint($"Culture not found: {e}");
+                Console.WriteLine("Culture not found, using invariant culture.");
                 culture = CultureInfo.InvariantCulture;
             }
         }
