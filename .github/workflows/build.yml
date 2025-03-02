@@ -37,5 +37,6 @@ jobs:
         with:
           artifacts: ./publish/**
           prerelease: ${{ contains(github.ref, 'dev') }}
+          tag: v1.0.${{ github.run_number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
