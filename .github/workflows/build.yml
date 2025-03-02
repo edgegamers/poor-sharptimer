@@ -55,9 +55,14 @@ jobs:
 
       - name: Zip published files
         run: |
+          # Create necessary directories
           mkdir -p publish/addons/counterstrikesharp/plugins/SharpTimer/
+          
+          # Move files and directories inside ./publish to the target directory (without causing circular references)
           find ./publish -mindepth 1 -maxdepth 1 ! -name 'cfg' ! -name 'lang' -exec mv {} publish/addons/counterstrikesharp/plugins/SharpTimer/ \;
-          find ./publish -mindepth 1 -maxdepth 1 -type d -exec zip -r ${{ env.ZIP_NAME }} ./publish/{} +
+          
+          # Zip all directories inside ./publish (but not the ./publish directory itself)
+          find ./publish -mindepth 1 -maxdepth 1 -type d -exec zip -r ${{ env.ZIP_NAME }} {} +
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.16.0
