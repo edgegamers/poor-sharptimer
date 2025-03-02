@@ -15,6 +15,9 @@
     <PackageReference Include="Npgsql" Version="8.0.3" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include=".github\workflows\build.yml" />
+  </ItemGroup>
 
   <Target Name="Date" BeforeTargets="BeforeBuild">
     <WriteLinesToFile File="$(IntermediateOutputPath)gen.cs" Lines="static partial class CompileTimeStamp { public static long CompileTime = $([System.DateTime]::UtcNow.Ticks) %3B }" Overwrite="true" />
