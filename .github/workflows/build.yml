@@ -56,7 +56,7 @@ jobs:
       - name: Zip published files
         run: |
           mkdir -p publish/addons/counterstrikesharp/plugins/SharpTimer/
-          find ./publish -mindepth 1 -maxdepth 1 ! -name 'cfg' ! -name 'lang' -exec mv {} publish/addons/counterstrikesharp/plugins/SharpTimer/ \;
+          find ./publish -mindepth 1 -maxdepth 1 ! -name 'cfg' -exec mv {} publish/addons/counterstrikesharp/plugins/SharpTimer/ \;
           cd publish
           zip -r ${{ env.ZIP_NAME }} .
 
