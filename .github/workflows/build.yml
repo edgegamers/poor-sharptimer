@@ -38,7 +38,7 @@ jobs:
         run: dotnet build --configuration Release SharpTimer.csproj
 
       - name: Publish the project
-        run: dotnet publish --configuration Release --output . SharpTimer.csproj
+        run: dotnet publish --configuration Release --output ./release SharpTimer.csproj
 
       - name: Set version tag and zip file name
         id: version
@@ -56,15 +56,15 @@ jobs:
       - name: Zip published files
         run: |
           # Create necessary directories
-          mkdir -p addons/counterstrikesharp/plugins/SharpTimer/
-          find . -mindepth 1 -maxdepth 1 ! -name 'cfg' -exec mv {} addons/counterstrikesharp/plugins/SharpTimer/ \;
-          zip -r $ZIP_NAME addons/ cfg/ lang/
+          mkdir -p release/addons/counterstrikesharp/plugins/SharpTimer/
+          find . -mindepth 1 -maxdepth 1 ! -name 'cfg' -exec mv {} release/addons/counterstrikesharp/plugins/SharpTimer/ \;
+          zip -r release/$ZIP_NAME release/*
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.16.0
         with:
           name: ${{ env.TAG }}
-          artifacts: ${{ env.ZIP_NAME }}
+          artifacts: release/${{ env.ZIP_NAME }}
           prerelease: ${{ contains(github.ref, 'dev') }}
           tag: v1.0.${{ github.run_number }}
         env:
