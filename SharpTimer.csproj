@@ -25,6 +25,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>cfg\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
+    <Content Include="gamedata\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>gamedata\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
   <Target Name="Date" BeforeTargets="BeforeBuild">

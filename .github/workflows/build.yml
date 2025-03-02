@@ -44,7 +44,7 @@ jobs:
       - name: Publish the project
         run: dotnet publish --configuration Release --output ./publish SharpTimer.csproj
 
-      - name: Zip published files
+      - name: Move files
         run: |
           mkdir -p publish/addons/counterstrikesharp/plugins/SharpTimer/
           find ./publish -mindepth 1 -maxdepth 1 ! -name 'cfg' -exec mv {} publish/addons/counterstrikesharp/plugins/SharpTimer/ \;
