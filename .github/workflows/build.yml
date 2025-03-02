@@ -1,0 +1,45 @@
+﻿name: Build and Publish C# Project
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up .NET 8.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build the project
+        run: dotnet build --configuration Release
+
+      - name: Publish the project
+        run: dotnet publish --configuration Release --output ./publish
+
+      - name: Create GitHub Release
+        uses: gh-actions/gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          release_name: "Release v1.0.${{ github.run_number }}"
+          body: "Automated release for version v1.0.${{ github.run_number }}"
+          files: ./publish/*
+          draft: false
+          prerelease: ${{ github.ref == 'refs/heads/dev' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
