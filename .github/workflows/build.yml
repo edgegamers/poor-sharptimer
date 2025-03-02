@@ -24,13 +24,13 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore SharpTimer.csproj
 
       - name: Build the project
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Release SharpTimer.csproj
 
       - name: Publish the project
-        run: dotnet publish --configuration Release --output ./publish
+        run: dotnet publish --configuration Release --output ./publish SharpTimer.csproj
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.16.0
