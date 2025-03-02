@@ -25,7 +25,16 @@ namespace SharpTimer
     public partial class SharpTimer
     {
         //Because decimals are weird
-        CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+        private CultureInfo culture;
+
+        public SharpTimer() {
+            try {
+                culture = CultureInfo.CreateSpecificCulture("en-US");
+            } catch (CultureNotFoundException e) {
+                SharpTimerConPrint($"Culture not found: {e}");
+                culture = CultureInfo.InvariantCulture;
+            }
+        }
         
         [ConsoleCommand("sharptimer_hostname", "Default Server Hostname.")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
