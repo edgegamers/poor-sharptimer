@@ -26,6 +26,12 @@
       <Link>cfg\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
   </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="MAULActainShared.dll">
+      <HintPath>src/Mixins/MAULActainShared.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
   <Target Name="Date" BeforeTargets="BeforeBuild">
     <WriteLinesToFile File="$(IntermediateOutputPath)gen.cs" Lines="static partial class CompileTimeStamp { public static long CompileTime = $([System.DateTime]::UtcNow.Ticks) %3B }" Overwrite="true"/>
