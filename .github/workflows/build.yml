@@ -38,7 +38,7 @@ jobs:
         run: dotnet build --configuration Release SharpTimer.csproj
 
       - name: Publish the project
-        run: dotnet publish --configuration Release --output ./publish SharpTimer.csproj
+        run: dotnet publish --configuration Release --output . SharpTimer.csproj
 
       - name: Set version tag and zip file name
         id: version
@@ -56,13 +56,9 @@ jobs:
       - name: Zip published files
         run: |
           # Create necessary directories
-          mkdir -p publish/addons/counterstrikesharp/plugins/SharpTimer/
-          
-          # Move files and directories inside ./publish to the target directory (without causing circular references)
-          find ./publish -mindepth 1 -maxdepth 1 ! -name 'cfg' ! -name 'lang' -exec mv {} publish/addons/counterstrikesharp/plugins/SharpTimer/ \;
-          
-          # Zip all directories inside ./publish (but not the ./publish directory itself)
-          find ./publish -mindepth 1 -maxdepth 1 -type d -exec zip -r ${{ env.ZIP_NAME }} {} +
+          mkdir -p addons/counterstrikesharp/plugins/SharpTimer/
+          find . -mindepth 1 -maxdepth 1 ! -name 'cfg' -exec mv {} addons/counterstrikesharp/plugins/SharpTimer/ \;
+          zip -r $ZIP_NAME addons/ cfg/ lang/
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.16.0
