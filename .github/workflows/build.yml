@@ -44,12 +44,10 @@ jobs:
         run: |
           mkdir -p publish/addons/counterstrikesharp/plugins/SharpTimer/
           find ./publish -mindepth 1 -maxdepth 1 ! -name 'cfg' -exec mv {} publish/addons/counterstrikesharp/plugins/SharpTimer/ \;
-#          cd publish
-#          zip -r SharpTimer.zip .
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SharpTimer.zip
+          name: SharpTimer
           path: publish/*
           if-no-files-found: error
