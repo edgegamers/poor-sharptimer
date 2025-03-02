@@ -47,7 +47,8 @@ jobs:
       - name: Move files
         run: |
           mkdir -p publish/addons/counterstrikesharp/plugins/SharpTimer/
-          find ./publish -mindepth 1 -maxdepth 1 ! -name 'cfg' -exec mv {} publish/addons/counterstrikesharp/plugins/SharpTimer/ \;
+          find ./publish -mindepth 1 -maxdepth 1 ! -name 'cfg' ! -name 'gamedata' -exec mv {} publish/addons/counterstrikesharp/plugins/SharpTimer/ \;
+          mv gamedata/ ./publish/addons/counterstrikesharp/
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
