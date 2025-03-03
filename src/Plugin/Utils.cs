@@ -23,12 +23,15 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Vector = CounterStrikeSharp.API.Modules.Utils.Vector;
-using CounterStrikeSharp.API.Modules.Entities;
+using System.Runtime.InteropServices;
 
 namespace SharpTimer
 {
     public partial class SharpTimer
     {
+        private delegate nint CNetworkSystemUpdatePublicIp(nint a1);
+        private static CNetworkSystemUpdatePublicIp? _networkSystemUpdatePublicIp;
+
         public async Task<(bool IsLatest, string LatestVersion)> IsLatestVersion()
         {
             try
@@ -95,17 +98,8 @@ namespace SharpTimer
             {
                 Task.Run(async () =>
                 {
-                    Dictionary<string, PlayerRecord> sortedRecords;
-                    if (!enableDb)
-                    {
-                        SharpTimerDebug($"Getting Server Record AD using json");
-                        sortedRecords = await GetSortedRecords();
-                    }
-                    else
-                    {
-                        SharpTimerDebug($"Getting Server Record AD using database");
-                        sortedRecords = await GetSortedRecordsFromDatabase(100);
-                    }
+                    SharpTimerDebug($"Getting Server Record AD using database");
+                    var sortedRecords = await GetSortedRecordsFromDatabase(100);
 
                     SharpTimerDebug($"Running Server Record AD...");
 
@@ -140,7 +134,7 @@ namespace SharpTimer
                 var customAdMessageFilePath = Path.Join(gameDir + "/csgo/cfg/SharpTimer/admessages.txt");
                 if (File.Exists(customAdMessageFilePath))
                 {
-                    string[] customAdMessages = File.ReadAllLines(customAdMessageFilePath);
+                    string[] customAdMessages = File.ReadAllLines(customAdMessageFilePath, System.Text.Encoding.UTF8);
                     var nonEmptyCustomAds = customAdMessages.Where(ad => !string.IsNullOrEmpty(ad) && !ad.TrimStart().StartsWith("//")).ToList();
 
                     allAdMessages.AddRange(nonEmptyCustomAds);
@@ -285,38 +279,6 @@ namespace SharpTimer
             {
                 return "n/a";
             }
-        }
-
-        public double CalculatePoints(int timerTicks, int style)
-        {
-            double basePoints = 10000.0;
-            double timeFactor = 0.0001;
-            double tierMult = 0.1;
-            double styleMult = GetStyleMultiplier(style);
-
-            if (currentMapTier != null)
-            {
-                tierMult = (double)(currentMapTier * 0.1);
-            }
-
-            double points = basePoints / (timerTicks * timeFactor);
-            return points * tierMult * styleMult;
-        }
-
-        public double CalculatePBPoints(int timerTicks, int style)
-        {
-            double basePoints = 10000.0;
-            double timeFactor = 0.01;
-            double tierMult = 0.1;
-            double styleMult = GetStyleMultiplier(style);
-
-            if (currentMapTier != null)
-            {
-                tierMult = (double)(currentMapTier * 0.1);
-            }
-
-            double points = basePoints / (timerTicks * timeFactor);
-            return points * tierMult * styleMult;
         }
 
         string ParseColorToSymbol(string input)
@@ -675,6 +637,24 @@ namespace SharpTimer
             return sortedRecords;
         }
 
+        public static PlayerRecord GetRecordByPosition(Dictionary<string, PlayerRecord> sortedRecords, int position)
+        {
+            if (position < 1 || position > sortedRecords.Count)
+            {
+                return null;
+            }
+
+            var recordsList = sortedRecords.Values.ToList();
+            for (int i = 0; i < recordsList.Count; i++)
+            {
+                if (i + 1 == position)
+                {
+                    return recordsList[i];
+                }
+            }
+            return null; 
+        }
+
         public async Task<(string, string, string)> GetMapRecordSteamID(int bonusX = 0, int top10 = 0)
         {
             string mapRecordsPath = Path.Combine(playerRecordsPath!, bonusX == 0 ? $"{currentMapName}.json" : $"{currentMapName}_bonus{bonusX}.json");
@@ -727,17 +707,19 @@ namespace SharpTimer
             return (steamId64, playerName, timerTicks);
         }
 
-        private async Task<(int? Tier, string? Type)> FindMapInfoFromHTTP(string url)
+        private async Task<(int? Tier, string? Type)> FindMapInfoFromHTTP(string url, string mapname = "")
         {
             try
             {
+                if (mapname == "")
+                    mapname = currentMapName!;
                 SharpTimerDebug($"Trying to fetch remote_data for {currentMapName} from {url}");
 
                 var response = await httpClient.GetStringAsync(url);
 
                 using (var jsonDocument = JsonDocument.Parse(response))
                 {
-                    if (jsonDocument.RootElement.TryGetProperty(currentMapName!, out var mapInfo))
+                    if (jsonDocument.RootElement.TryGetProperty(mapname, out var mapInfo))
                     {
                         int? tier = null;
                         string? type = null;
@@ -767,10 +749,57 @@ namespace SharpTimer
             }
         }
 
+        private async Task<(int? Tier, string? Type)> FindMapInfoFromLocal(string path, string mapname = "")
+        {
+            try
+            {
+                if (mapname == "")
+                    mapname = currentMapName!;
+                SharpTimerDebug($"Trying to fetch local_data for {currentMapName} from {path}");
+
+                using (var jsonDocument = await LoadJson(path))
+                {
+                    
+                    if (jsonDocument!.RootElement.TryGetProperty(mapname, out var mapInfo))
+                    {
+                        int? tier = null;
+                        string? type = null;
+
+                        if (mapInfo.TryGetProperty("Tier", out var tierElement))
+                        {
+                            tier = tierElement.GetInt32();
+                        }
+
+                        if (mapInfo.TryGetProperty("Type", out var typeElement))
+                        {
+                            type = typeElement.GetString();
+                        }
+
+                        SharpTimerDebug($"Fetched local_data success! {tier} {type}");
+
+                        return (tier, type);
+                    } 
+                }
+
+                return (null, null);
+            }
+            catch (Exception ex)
+            {
+                SharpTimerError($"Error Getting local_data for {currentMapName}: {ex.Message}");
+                return (null, null);
+            }
+        }
+
         private async Task GetMapInfo()
         {
             string mapInfoSource = GetMapInfoSource();
-            var (mapTier, mapType) = await FindMapInfoFromHTTP(mapInfoSource);
+            int? mapTier;
+            string? mapType;
+            if (disableRemoteData)
+                (mapTier, mapType) = await FindMapInfoFromLocal(mapInfoSource);
+            else
+                (mapTier, mapType) = await FindMapInfoFromHTTP(mapInfoSource);
+                
             currentMapTier = mapTier;
             currentMapType = mapType;
             string tierString = currentMapTier != null ? $" | Tier: {currentMapTier}" : "";
@@ -788,6 +817,16 @@ namespace SharpTimer
 
         private string GetMapInfoSource()
         {
+            if (disableRemoteData)
+            {
+                return currentMapName switch
+                {
+                    var name when name!.StartsWith("kz_") => Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "MapData", "local_data", "kz_.json")!,
+                    var name when name!.StartsWith("bhop_") => Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "MapData", "local_data", "bhop_.json")!,
+                    var name when name!.StartsWith("surf_") => Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "MapData", "local_data", "surf_.json"),
+                    _ => null
+                } ?? Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "MapData", "local_data", "surf_.json");
+            }
             return currentMapName switch
             {
                 var name when name!.StartsWith("kz_") => remoteKZDataSource!,
@@ -840,22 +879,6 @@ namespace SharpTimer
                         }
                     });
 
-                    if (enableReplays && enableSRreplayBot)
-                    {
-                        AddTimer(5.0f, () =>
-                        {
-                            if (ConVar.Find("mp_force_pick_time")!.GetPrimitiveValue<float>() == 1.0)
-                                _ = Task.Run(async () => await SpawnReplayBot());
-                            else
-                            {
-                                PrintToChatAll($" {ChatColors.LightRed}Couldnt Spawn Replay bot!");
-                                PrintToChatAll($" {ChatColors.LightRed}Please make sure mp_force_pick_time is set to 1");
-                                PrintToChatAll($" {ChatColors.LightRed}in your custom_exec.cfg");
-                                SharpTimerError("Couldnt Spawn Replay bot! Please make sure mp_force_pick_time is set to 1 in your custom_exec.cfg");
-                            }
-                        });
-                    }
-
                     if (removeCrouchFatigueEnabled == true) Server.ExecuteCommand("sv_timebetweenducks 0");
 
                     //bonusRespawnPoses.Clear();
@@ -869,6 +892,7 @@ namespace SharpTimer
                     stageTriggerPoses.Clear();
 
                     KillServerCommandEnts();
+                    globalDisabled = false;
 
                     if (!sqlCheck)
                     {
@@ -899,10 +923,29 @@ namespace SharpTimer
                         }
                         using (var connection = OpenConnection())
                         {
+                            CheckTablesAsync();
                             ExecuteMigrations(connection);
                         }
                         sqlCheck = true;
                     }
+
+                    if (Directory.Exists($"{gameDir}/addons/StripperCS2/maps/{Server.MapName}"))
+                    {
+                        globalDisabled = true;
+                        SharpTimerError("StripperCS2 detected for current map; disabling globalapi");
+                    }
+
+                    if (currentMapOverrideDisableTelehop!.Length > 0)
+                    {
+                        globalDisabled = true;
+                        SharpTimerError("OverrideDisableTelehop detected for current map; disabling globalapi");
+                    }
+                    
+                    _ = Task.Run(async () => await CacheWorldRecords());
+                    AddTimer(globalCacheInterval, async () => await CacheWorldRecords(), TimerFlags.REPEAT);
+
+                    _ = Task.Run(async () => await CacheGlobalPoints());
+                    AddTimer(globalCacheInterval, async () => await CacheGlobalPoints(), TimerFlags.REPEAT);
                 });
             }
             catch (Exception ex)
@@ -916,6 +959,7 @@ namespace SharpTimer
             try
             {
                 currentMapName = mapName;
+                currentAddonID = GetAddonID();
                 totalBonuses = new int[11];
                 bonusRespawnPoses.Clear();
                 bonusRespawnAngs.Clear();
@@ -960,7 +1004,6 @@ namespace SharpTimer
                     else if (file.Contains($"{currentMapName}_bonus3"))
                     {
                         totalBonuses[3] = 3;
-                        SharpTimerDebug($"Found bonus 3 in {currentMapName}");
                         bonusdataFileNames[3] = $"/SharpTimer/MapData/{currentMapName}_bonus3.json";
                         bonusdataPaths[3] = Path.Join(gameDir + "/csgo/cfg", bonusdataFileNames[3]);
                     }
@@ -1029,8 +1072,6 @@ namespace SharpTimer
 
                 entityCache = new EntityCache();
                 UpdateEntityCache();
-
-                _ = Task.Run(async () => { SortedCachedRecords = await GetSortedRecords(); });
 
                 ClearMapData();
 
@@ -1112,6 +1153,9 @@ namespace SharpTimer
                                 currentBonusEndPos[bonus] = CalculateMiddleVector(currentBonusEndC1[bonus], currentBonusEndC2[bonus]);
                                 bonusRespawnPoses[bonus] = ParseVector(mapInfo.BonusRespawnPos);
                                 SharpTimerConPrint($"Found Fake Bonus {bonus} Trigger Corners: START {currentBonusStartC1[bonus]}, {currentBonusStartC2[bonus]} | END {currentBonusEndC1[bonus]}, {currentBonusEndC2[bonus]}");
+
+                                // Disable global for lackluster maps
+                                globalDisabled = true;
                             }
                             if (currentBonusStartC1[bonus] != null && currentBonusStartC2[bonus] != null && currentBonusEndC1[bonus] != null && currentBonusEndC2[bonus] != null)
                             {
@@ -1138,6 +1182,9 @@ namespace SharpTimer
                         currentMapEndC2 = ParseVector(mapInfo.MapEndC2);
                         currentEndPos = CalculateMiddleVector(currentMapEndC1, currentMapEndC2);
                         SharpTimerConPrint($"Found Fake Trigger Corners: START {currentMapStartC1}, {currentMapStartC2} | END {currentMapEndC1}, {currentMapEndC2}");
+
+                        // Disable global for lackluster maps
+                        globalDisabled = true;
                     }
 
                     if (!string.IsNullOrEmpty(mapInfo.MapStartTrigger) && !string.IsNullOrEmpty(mapInfo.MapEndTrigger))
@@ -1543,6 +1590,47 @@ namespace SharpTimer
                 SharpTimerError($"Error GetClosestMapCFGMatch: {ex.StackTrace}");
                 return "null";
             }
+        }
+
+        public bool IsApproximatelyEqual(float actual, float expected, float tolerance = 0.01f)
+        {
+            return Math.Abs(actual - expected) < tolerance;
+        }
+
+        // https://github.com/daffyyyy/CS2-SimpleAdmin/blob/main/CS2-SimpleAdmin/Helper.cs#L457C5-L481C6
+        // remember, dont reinvent the wheel
+        public static string GetServerIp()
+        {
+            var networkSystem = NativeAPI.GetValveInterface(0, "NetworkSystemVersion001");
+
+            unsafe
+            {
+                if (_networkSystemUpdatePublicIp == null)
+                {
+                    var funcPtr = *(nint*)(*(nint*)(networkSystem) + 256);
+                    _networkSystemUpdatePublicIp = Marshal.GetDelegateForFunctionPointer<CNetworkSystemUpdatePublicIp>(funcPtr);
+                }
+                /*
+                struct netadr_t
+                {
+                uint32_t type
+                uint8_t ip[4]
+                uint16_t port
+                }
+                */
+                // + 4 to skip type, because the size of uint32_t is 4 bytes
+                var ipBytes = (byte*)(_networkSystemUpdatePublicIp(networkSystem) + 4);
+                // port is always 0, use the one from convar "hostport"
+                return $"{ipBytes[0]}.{ipBytes[1]}.{ipBytes[2]}.{ipBytes[3]}";
+            }
+        }
+
+        public (string, string) GetHostnameAndIp()
+        {
+            string ip = $"{GetServerIp()}:{ConVar.Find("hostport")!.GetPrimitiveValue<int>()}";
+            string hostname = ConVar.Find("hostname")!.StringValue;
+
+            return (hostname, ip);
         }
     }
 }

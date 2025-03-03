@@ -38,8 +38,14 @@ namespace SharpTimer
                     SharpTimerDebug("Player is null in trigger_multiple OnStartTouch hook.");
                     return HookResult.Continue;
                 }
+                if (player.IsBot)
+                {
+                    SharpTimerDebug("Player is bot in trigger_multiple OnStartTouch hook.");
+                    return HookResult.Continue;
+                }
 
-                if (!IsAllowedPlayer(player) || caller.Entity!.Name == null) return HookResult.Continue;
+
+                if (!IsAllowedPlayer(player) || caller.Entity!.Name == null || !connectedPlayers.TryGetValue(player.Slot, out var connected)) return HookResult.Continue;
 
                 var callerHandle = caller.Handle;
                 var playerSlot = player.Slot;
@@ -93,7 +99,7 @@ namespace SharpTimer
                     {
                         playerTimer.inStartzone = true;
                     }
-                    if (!playerTimers[playerSlot].IsTimerBlocked)
+                    if (!playerTimers[playerSlot].IsTimerBlocked && playerTimer!.currentStyle != 12) // if in TAS style, dont wipe checkpoints onstart (wipe them on !r)
                     {
                         playerCheckpoints.Remove(playerSlot);
                     }
@@ -201,8 +207,13 @@ namespace SharpTimer
                     SharpTimerDebug("Player is null in trigger_multiple OnEndTouch hook.");
                     return HookResult.Continue;
                 }
+                if (player.IsBot)
+                {
+                    SharpTimerDebug("Player is bot in trigger_multiple OnEndTouch hook.");
+                    return HookResult.Continue;
+                }
 
-                if (!IsAllowedPlayer(player) || caller.Entity!.Name == null) return HookResult.Continue;
+                if (!IsAllowedPlayer(player) || caller.Entity!.Name == null || !connectedPlayers.TryGetValue(player.Slot, out var connected)) return HookResult.Continue;
 
                 var playerSlot = player.Slot;
                 var playerName = player.PlayerName;
@@ -285,9 +296,8 @@ namespace SharpTimer
 
                 var player = new CCSPlayerController(new CCSPlayerPawn(activator.Handle).Controller.Value!.Handle);
 
-                if (player == null)
+                if (player == null || player.IsBot || player.IsHLTV || !player.IsValid)
                 {
-
                     return HookResult.Continue;
                 }
 
@@ -303,7 +313,6 @@ namespace SharpTimer
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Exception in trigger_teleport hook: {ex.Message}");
                 return HookResult.Continue;
             }
         }
@@ -325,7 +334,7 @@ namespace SharpTimer
 
                 var player = new CCSPlayerController(new CCSPlayerPawn(activator.Handle).Controller.Value!.Handle);
 
-                if (player == null)
+                if (player == null || player.IsBot || player.IsHLTV || !player.IsValid)
                 {
                     SharpTimerDebug("Player is null in trigger_teleport hook.");
                     return HookResult.Continue;
@@ -352,7 +361,6 @@ namespace SharpTimer
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Exception in trigger_teleport hook: {ex.Message}");
                 return HookResult.Continue;
             }
         }

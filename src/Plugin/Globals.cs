@@ -13,7 +13,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-using System.Runtime.Intrinsics.X86;
 using System.Text.Json;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Cvars;
@@ -27,7 +26,7 @@ namespace SharpTimer
         public string compileTimeStamp = new DateTime(CompileTimeStamp.CompileTime, DateTimeKind.Utc).ToString();
 
         public override string ModuleName => "SharpTimer";
-        public override string ModuleVersion => $"0.3.0";
+        public override string ModuleVersion => $"0.3.1w";
         public override string ModuleAuthor => "dea https://github.com/deabb/";
         public override string ModuleDescription => "A CS2 Timer Plugin";
 
@@ -36,10 +35,11 @@ namespace SharpTimer
         private Dictionary<int, PlayerReplays> playerReplays = [];
         private Dictionary<int, List<PlayerCheckpoint>> playerCheckpoints = [];
         public Dictionary<int, CCSPlayerController> connectedPlayers = [];
+        public Dictionary<int, CCSPlayerController> connectedAFKPlayers = [];
         private Dictionary<int, CCSPlayerController> connectedReplayBots = [];
         private Dictionary<uint, CCSPlayerController> specTargets = [];
         private EntityCache? entityCache;
-        public Dictionary<string, PlayerRecord>? SortedCachedRecords = [];
+        public Dictionary<int, PlayerRecord>? SortedCachedRecords = [];
         private static readonly HttpClient httpClient = new();
 
         public static JsonSerializerOptions jsonSerializerOptions = new()
@@ -75,6 +75,9 @@ namespace SharpTimer
         public int cpTriggerCount;
         private bool useCheckpointTriggers = false;
         public bool useCheckpointVerification = true;
+        
+        public bool applyInfiniteAmmo = true;
+        public bool useAnticheat = false;
 
         private Dictionary<int, Vector?> bonusRespawnPoses = [];
         private Dictionary<int, QAngle?> bonusRespawnAngs = [];
@@ -115,22 +118,56 @@ namespace SharpTimer
         public bool enableStageTimes = true;
         public bool ignoreJSON = false;
         public bool enableReplays = false;
+        public bool onlySRReplay = false;
         public bool enableSRreplayBot = false;
         public bool startKickingAllFuckingBotsExceptReplayOneIFuckingHateValveDogshitFuckingCompanySmile = false;
         public bool foundReplayBot = false;
         public string replayBotName = "";
         public int maxReplayFrames = 19200;
+        public string apiKey = "";
 
         public bool globalRanksEnabled = false;
-        public bool globalRanksFreePointsEnabled = true;
-        public int maxGlobalFreePoints = 20;
         public float? globalPointsMultiplier = 1.0f;
-        public int minGlobalPointsForRank = 1000;
+        public int minGlobalPointsForRank = 1;
+        public double globalPointsBonusMultiplier = 0.5;
+
+        // Points settings
+        public int baselineT1 = 25;
+        public int baselineT2 =  50;
+        public int baselineT3 = 100;
+        public int baselineT4 = 200;
+        public int baselineT5 = 400;
+        public int baselineT6 = 600;
+        public int baselineT7 = 800;
+        public int baselineT8 = 1000;
+        public int maxRecordPointsBase = 250;
+        public int globalPointsMaxCompletions = 0;
+
+        // Top 10
+        public double top10_1 = 1;
+        public double top10_2 = 0.8;
+        public double top10_3 = 0.75;
+        public double top10_4 = 0.7;
+        public double top10_5 = 0.65;
+        public double top10_6 = 0.6;
+        public double top10_7 = 0.55;
+        public double top10_8 = 0.5;
+        public double top10_9 = 0.45;
+        public double top10_10 = 0.4;
+
+        // Groups
+        public double group1 = 3.125;
+        public double group2 = 6.25;
+        public double group3 = 12.5;
+        public double group4 = 25;
+        public double group5 = 50;
+
+
+        public bool globalChecksPassed = false;
+        public bool globalDisabled = false;
         public bool displayChatTags = true;
         public bool displayScoreboardTags = true;
-        public string customVIPTag = "[VIP]";
-        //public string vipGifHost = "https://files.catbox.moe";
-
+        public string customVIPTag = "[VIP] ";
         public bool useTriggers = true;
         public bool useTriggersAndFakeZones = false;
 
@@ -139,6 +176,7 @@ namespace SharpTimer
 
         public bool keysOverlayEnabled = true;
         public bool hudOverlayEnabled = true;
+        public int hudTickrate = 64;
         public bool VelocityHudEnabled = true;
         public bool StrafeHudEnabled = true;
         public bool MapTierHudEnabled = true;
@@ -147,10 +185,12 @@ namespace SharpTimer
 
         public bool topEnabled = true;
         public bool rankEnabled = true;
+        private bool rankEnabledInitialized = false;
         public bool helpEnabled = true;
         public bool startzoneJumping = true;
         public bool spawnOnRespawnPos = false;
         public bool enableNoclip = false;
+        public bool enableRsOnLinear = false;
 
         public bool enableStyles = true;
         public bool enableStylePoints = true;
@@ -193,8 +233,11 @@ namespace SharpTimer
         public bool forcePlayerSpeedEnabled = false;
         public float forcedPlayerSpeed = 250;
         public int bhopBlockTime = 16;
-
-        public double lowgravPointModifier = 1.1;
+        public bool afkHibernation = true;
+        public bool afkWarning = true;
+        public int afkSeconds = 60;
+        public int globalCacheInterval = 120;
+        public double lowgravPointModifier = 0.8;
         public double sidewaysPointModifier = 1.3;
         public double halfSidewaysPointModifier = 1.3;
         public double onlywPointModifier = 1.33;
@@ -202,8 +245,10 @@ namespace SharpTimer
         public double onlysPointModifier = 1.33;
         public double onlydPointModifier = 1.33;
         public double velPointModifier = 1.5;
-        public double highgravPointModifier = 1.3;
-        public double fastForwardPointModifier = 1.3;
+        public double highgravPointModifier = 1.1;
+        public double fastForwardPointModifier = 0.8;
+        public double parachutePointModifier = 0.8;
+        public double tasPointModifier = 0.0;
 
         public bool jumpStatsEnabled = false;
         public float jumpStatsMinDist = 175;
@@ -231,13 +276,17 @@ namespace SharpTimer
         public string? postgresPath;
         public string? PlayerStatsTable = "PlayerStats";
         public string? playerRecordsPath;
+        public string? playerStagesPath;
         public string? currentMapName;
+        public string? currentAddonID;
         public string? defaultServerHostname = ConVar.Find("hostname")?.StringValue;
+        public string? playerReplaysPath;
 
         public bool discordWebhookEnabled = false;
         public string discordWebhookBotName = "SharpTimer";
         public string discordWebhookPFPUrl = "https://cdn.discordapp.com/icons/1196646791450472488/634963a8207fdb1b30bf909d31f05e57.webp";
         public string discordWebhookImageRepoURL = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimerDiscordWebhookMapPics/main/images/";
+        private string? discordACWebhookUrl;
         public string? discordPBWebhookUrl;
         public string? discordSRWebhookUrl;
         public string? discordPBBonusWebhookUrl;
@@ -259,6 +308,7 @@ namespace SharpTimer
         public string? remoteBhopDataSource = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/bhop_.json";
         public string? remoteKZDataSource = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/kz_.json";
         public string? remoteSurfDataSource = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/surf_.json";
+        public bool disableRemoteData = false;
         public string? testerPersonalGifsSource = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/tester_bling.json";
 
 

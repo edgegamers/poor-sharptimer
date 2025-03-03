@@ -232,20 +232,23 @@ namespace SharpTimer
                         if(playerTimers.TryGetValue(player.Slot, out PlayerTimerInfo? playerTimer))
                         {
                             playerTimer.inStartzone = true;
-                        }
-
-                        OnTimerStart(player);
-                        if (enableReplays) OnRecordingStart(player);
-
-                        if ((maxStartingSpeedEnabled == true && use2DSpeed == false && Math.Round(playerSpeed.Length()) > maxStartingSpeed) ||
-                            (maxStartingSpeedEnabled == true && use2DSpeed == true && Math.Round(playerSpeed.Length2D()) > maxStartingSpeed))
-                        {
-                            Action<CCSPlayerController?, float, bool> adjustVelocity = use2DSpeed ? AdjustPlayerVelocity2D : AdjustPlayerVelocity;
-                            adjustVelocity(player, maxStartingSpeed, true);
+                            InvalidateTimer(player);
                         }
                     }
                     else if (!isInsideStartBox && playerTimers.TryGetValue(player.Slot, out PlayerTimerInfo? playerTimer))
                     {
+                        if (playerTimer.inStartzone == true)
+                        {
+                            OnTimerStart(player);
+                            if (enableReplays) OnRecordingStart(player);
+
+                            if ((maxStartingSpeedEnabled == true && use2DSpeed == false && Math.Round(playerSpeed.Length()) > maxStartingSpeed) ||
+                                (maxStartingSpeedEnabled == true && use2DSpeed == true && Math.Round(playerSpeed.Length2D()) > maxStartingSpeed))
+                            {
+                                Action<CCSPlayerController?, float, bool> adjustVelocity = use2DSpeed ? AdjustPlayerVelocity2D : AdjustPlayerVelocity;
+                                adjustVelocity(player, maxStartingSpeed, true);
+                            }
+                        }
                         playerTimer.inStartzone = false;
                     }
                 }
@@ -342,11 +345,13 @@ namespace SharpTimer
         {
             if (cpOnlyWhenTimerStopped == true && playerTimers[player!.Slot].IsTimerBlocked == false)
             {
+                if (playerTimers[player.Slot].currentStyle == 12)
+                    return true;
                 PrintToChat(player, Localizer["cant_use_checkpoint", (currentMapName!.Contains("surf_") ? "loc" : "checkpoint")]);
                 PlaySound(player, cpSoundError);
-                return true;
+                return false;
             }
-            return false;
+            return true;
         }
     }
 }

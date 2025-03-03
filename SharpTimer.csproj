@@ -6,20 +6,37 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.281">
-        <PrivateAssets>none</PrivateAssets>
-        <ExcludeAssets>runtime</ExcludeAssets>
-        <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.287">
+      <PrivateAssets>none</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Nexd.MySQL" Version="1.0.2" />
-    <PackageReference Include="Npgsql" Version="8.0.3" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
+    <PackageReference Include="Nexd.MySQL" Version="1.0.2"/>
+    <PackageReference Include="Npgsql" Version="8.0.3"/>
+    <PackageReference Include="System.Data.SQLite" Version="1.0.118"/>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".github\workflows\build.yml"/>
+    <Content Include="lang\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>lang\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+    <Content Include="cfg\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>cfg\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="MAULActainShared.dll">
+      <HintPath>src/Mixins/MAULActainShared.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <Target Name="Date" BeforeTargets="BeforeBuild">
-    <WriteLinesToFile File="$(IntermediateOutputPath)gen.cs" Lines="static partial class CompileTimeStamp { public static long CompileTime = $([System.DateTime]::UtcNow.Ticks) %3B }" Overwrite="true" />
+    <WriteLinesToFile File="$(IntermediateOutputPath)gen.cs" Lines="static partial class CompileTimeStamp { public static long CompileTime = $([System.DateTime]::UtcNow.Ticks) %3B }" Overwrite="true"/>
     <ItemGroup>
-        <Compile Include="$(IntermediateOutputPath)gen.cs" />
+      <Compile Include="$(IntermediateOutputPath)gen.cs"/>
     </ItemGroup>
   </Target>
 </Project>

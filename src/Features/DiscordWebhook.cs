@@ -13,7 +13,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-using System.Diagnostics.Eventing.Reader;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -32,25 +31,54 @@ namespace SharpTimer
                 if (jsonConfig != null)
                 {
                     JsonElement root = jsonConfig.RootElement;
-
-                    discordWebhookBotName = root.TryGetProperty("DiscordWebhookBotName", out var NameProperty) ? NameProperty.GetString()! : "SharpTimer";
-                    discordWebhookPFPUrl = root.TryGetProperty("DiscordWebhookPFPUrl", out var PFPurlProperty) ? PFPurlProperty.GetString()! : "https://cdn.discordapp.com/icons/1196646791450472488/634963a8207fdb1b30bf909d31f05e57.webp";
-                    discordWebhookImageRepoURL = root.TryGetProperty("DiscordWebhookMapImageRepoUrl", out var mapImageRepoUrl) ? mapImageRepoUrl.GetString()! : "https://raw.githubusercontent.com/Letaryat/poor-sharptimermappics/main/pics/";
-                    discordPBWebhookUrl = root.TryGetProperty("DiscordPBWebhookUrl", out var PBurlProperty) ? PBurlProperty.GetString()! : "";
-                    discordSRWebhookUrl = root.TryGetProperty("DiscordSRWebhookUrl", out var SRurlProperty) ? SRurlProperty.GetString()! : "";
-                    discordPBBonusWebhookUrl = root.TryGetProperty("DiscordPBBonusWebhookUrl", out var PBBonusurlProperty) ? PBBonusurlProperty.GetString()! : "";
-                    discordSRBonusWebhookUrl = root.TryGetProperty("DiscordSRBonusWebhookUrl", out var SRBonusurlProperty) ? SRBonusurlProperty.GetString()! : "";
-                    discordWebhookFooter = root.TryGetProperty("DiscordFooterString", out var FooterProperty) ? FooterProperty.GetString()! : "";
-                    discordWebhookRareGif = root.TryGetProperty("DiscordRareGifUrl", out var RareGifProperty) ? RareGifProperty.GetString()! : "";
-                    discordWebhookRareGifOdds = root.TryGetProperty("DiscordRareGifOdds", out var RareGifOddsProperty) ? RareGifOddsProperty.GetInt16()! : 10000;
-                    discordWebhookColor = root.TryGetProperty("DiscordWebhookColor", out var ColorProperty) ? ColorProperty.GetInt16()! : 13369599;
-                    discordWebhookSteamAvatar = root.TryGetProperty("DiscordWebhookSteamAvatar", out var SteamAvatarProperty) ? SteamAvatarProperty.GetBoolean()! : true;
-                    discordWebhookTier = root.TryGetProperty("DiscordWebhookTier", out var TierProperty) ? TierProperty.GetBoolean()! : true;
-                    discordWebhookTimeChange = root.TryGetProperty("DiscordWebhookTimeChange", out var TimeChangeProperty) ? TimeChangeProperty.GetBoolean()! : true;
-                    discordWebhookTimesFinished = root.TryGetProperty("DiscordWebhookTimesFinished", out var TimesFinishedProperty) ? TimesFinishedProperty.GetBoolean()! : true;
-                    discordWebhookPlacement = root.TryGetProperty("DiscordWebhookPlacement", out var PlacementProperty) ? PlacementProperty.GetBoolean()! : true;
-                    discordWebhookSteamLink = root.TryGetProperty("DiscordWebhookSteamLink", out var SteamProperty) ? SteamProperty.GetBoolean()! : true;
-                    discordWebhookDisableStyleRecords = root.TryGetProperty("DiscordWebhookDisableStyleRecords", out var DisableStyleProperty) ? DisableStyleProperty.GetBoolean()! : true;
+                
+                    T GetPropertyValue<T>(string propertyName, T defaultValue, Func<JsonElement, T> getValue) {
+                        if (root.TryGetProperty(propertyName, out var property)) {
+                            try {
+                                return getValue(property);
+                            } catch (Exception ex) {
+                                SharpTimerError($"Error parsing {propertyName}: {ex.Message}");
+                                return defaultValue;
+                            }
+                        }
+                        return defaultValue;
+                    }
+                    
+                    discordWebhookBotName = GetPropertyValue("DiscordWebhookBotName", "SharpTimer", 
+                        prop => prop.GetString() ?? "SharpTimer");
+                    discordWebhookPFPUrl = GetPropertyValue("DiscordWebhookPFPUrl", 
+                        "https://cdn.discordapp.com/icons/1196646791450472488/634963a8207fdb1b30bf909d31f05e57.webp",
+                        prop => prop.GetString() ?? "");
+                    discordWebhookImageRepoURL = GetPropertyValue("DiscordWebhookMapImageRepoUrl", 
+                        "https://raw.githubusercontent.com/Letaryat/poor-sharptimermappics/main/pics/",
+                        prop => prop.GetString() ?? "");
+                    discordACWebhookUrl = GetPropertyValue("DiscordACWebhookUrl", "", prop => prop.GetString() ?? "");
+                    discordPBWebhookUrl = GetPropertyValue("DiscordPBWebhookUrl", "", prop => prop.GetString() ?? "");
+                    discordSRWebhookUrl = GetPropertyValue("DiscordSRWebhookUrl", "", prop => prop.GetString() ?? "");
+                    discordPBBonusWebhookUrl = GetPropertyValue("DiscordPBBonusWebhookUrl", "", prop => prop.GetString() ?? "");
+                    discordSRBonusWebhookUrl = GetPropertyValue("DiscordSRBonusWebhookUrl", "", prop => prop.GetString() ?? "");
+                    discordWebhookFooter = GetPropertyValue("DiscordFooterString", "", prop => prop.GetString() ?? "");
+                    discordWebhookRareGif = GetPropertyValue("DiscordRareGifUrl", "", prop => prop.GetString() ?? "");
+                    
+                    discordWebhookRareGifOdds = GetPropertyValue("DiscordRareGifOdds", 10000, 
+                        prop => prop.GetInt32());
+                    discordWebhookColor = GetPropertyValue("DiscordWebhookColor", 13369599, 
+                        prop => prop.GetInt32());
+                    
+                    discordWebhookSteamAvatar = GetPropertyValue("DiscordWebhookSteamAvatar", true, 
+                        prop => prop.GetBoolean());
+                    discordWebhookTier = GetPropertyValue("DiscordWebhookTier", true, 
+                        prop => prop.GetBoolean());
+                    discordWebhookTimeChange = GetPropertyValue("DiscordWebhookTimeChange", true, 
+                        prop => prop.GetBoolean());
+                    discordWebhookTimesFinished = GetPropertyValue("DiscordWebhookTimesFinished", true, 
+                        prop => prop.GetBoolean());
+                    discordWebhookPlacement = GetPropertyValue("DiscordWebhookPlacement", true, 
+                        prop => prop.GetBoolean());
+                    discordWebhookSteamLink = GetPropertyValue("DiscordWebhookSteamLink", true, 
+                        prop => prop.GetBoolean());
+                    discordWebhookDisableStyleRecords = GetPropertyValue("DiscordWebhookDisableStyleRecords", true, 
+                        prop => prop.GetBoolean());
                 }
                 else
                 {
@@ -235,6 +263,100 @@ namespace SharpTimer
             catch (Exception ex)
             {
                 SharpTimerError($"An error occurred while sending Discord PB message: {ex.Message}");
+            }
+        }
+
+        public async Task DiscordACMessage(CCSPlayerController? player, string reason)
+        {
+            try
+            {
+                string? webhookURL = discordACWebhookUrl;
+
+                if (string.IsNullOrEmpty(webhookURL))
+                {
+                    SharpTimerError($"DiscordACWebhookUrl was invalid");
+                    return;
+                }
+                using var client = new HttpClient();
+
+                var fields = new List<object>();
+
+                if (discordWebhookSteamLink && !string.IsNullOrEmpty(player!.SteamID.ToString()))
+                {
+                    fields.Add(new
+                    {
+                        name = "🛈 SteamID:",
+                        value = $"[Profile](https://steamcommunity.com/profiles/{player!.SteamID})",
+                        inline = true
+                    });
+                }
+                fields.Add(new
+                {
+                    name = "Reason:",
+                    value = $"{reason}",
+                    inline = true
+                });
+
+                var spacedFields = new List<object>();
+                for (int i = 0; i < fields.Count; i++)
+                {
+                    spacedFields.Add(fields[i]);
+                    if ((i + 1) % 2 == 0 && i != fields.Count - 1)
+                    {
+                        spacedFields.Add(new
+                        {
+                            name = "\u200B",
+                            value = "\u200B",
+                            inline = true
+                        });
+                    }
+                }
+                if (fields.Count % 2 == 0)
+                {
+                    spacedFields.Add(new
+                    {
+                        name = "\u200B",
+                        value = "\u200B",
+                        inline = true
+                    });
+                }
+
+                var embed = new Dictionary<string, object>
+                {
+                    { "title", "Player Flagged" },
+                    { "fields", spacedFields.ToArray() },
+                    { "author", new { name = $"{player!.PlayerName}", url = $"https://steamcommunity.com/profiles/{player.SteamID}" } },
+                    { "footer", new { text = discordWebhookFooter, icon_url = discordWebhookPFPUrl } }
+                };
+
+                if (discordWebhookColor != 0)
+                    embed.Add("color", discordWebhookColor);
+
+                if (discordWebhookSteamAvatar)
+                    embed.Add("thumbnail", new { url = await GetAvatarLink($"https://steamcommunity.com/profiles/{player.SteamID}/?xml=1") });
+
+                var payload = new
+                {
+                    content = (string?)null,
+                    embeds = new[] { embed },
+                    username = discordWebhookBotName,
+                    avatar_url = discordWebhookPFPUrl,
+                    attachments = Array.Empty<object>()
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await client.PostAsync(webhookURL, data);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    SharpTimerError($"Failed to send message. Status code: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                SharpTimerError($"An error occurred while sending Discord AC message: {ex.Message}");
             }
         }
 

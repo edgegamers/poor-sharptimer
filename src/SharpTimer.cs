@@ -19,17 +19,19 @@ using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using System.Runtime.InteropServices;
+using CounterStrikeSharp.API.Modules.Timers;
 
 namespace SharpTimer
 {
-    [MinimumApiVersion(281)]
+    [MinimumApiVersion(287)]
     public partial class SharpTimer : BasePlugin
     {
-        //public required MemoryFunctionVoid<CCSPlayer_MovementServices, IntPtr> RunCommandLinux;
-        //public required MemoryFunctionVoid<IntPtr, IntPtr, IntPtr, CCSPlayer_MovementServices> RunCommandWindows;
         public required IRunCommand RunCommand;
+        private static readonly MemoryFunctionVoid<CCSPlayerPawn, CSPlayerState> StateTransition = new(GameData.GetSignature("StateTransition"));
+        private readonly INetworkServerService networkServerService = new();
         private int movementServices;
         private int movementPtr;
+        private readonly CSPlayerState[] _oldPlayerState = new CSPlayerState[65];
         public override void Load(bool hotReload)
         {
             SharpTimerConPrint("Loading Plugin...");
@@ -41,18 +43,17 @@ namespace SharpTimer
             gameDir = Server.GameDirectory;
             SharpTimerDebug($"Set gameDir to {gameDir}");
 
-            string recordsFileName = $"SharpTimer/PlayerRecords/";
-            playerRecordsPath = Path.Join(gameDir + "/csgo/cfg", recordsFileName);
-
+            const string recordsFileName = "SharpTimer/PlayerRecords/";
+            playerRecordsPath = Path.Join(gameDir, "csgo", "cfg", recordsFileName);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) isLinux = true;
             else isLinux = false;
 
-            if(isLinux)
+            if (isLinux)
             {
                 movementServices = 0;
                 movementPtr = 1;
-                RunCommand = new RunCommandLinux();;
+                RunCommand = new RunCommandLinux();
             }
             else if (!isLinux)
             {
@@ -61,10 +62,123 @@ namespace SharpTimer
                 RunCommand = new RunCommandWindows();
             }
 
-            if(isLinux) RunCommand.Hook(OnRunCommand, HookMode.Pre);
+            if (isLinux) RunCommand.Hook(OnRunCommand, HookMode.Pre);
+            StateTransition.Hook(Hook_StateTransition, HookMode.Post);
+
+            float randomf = new Random().Next(5, 31);
+            if (apiKey != "")
+                AddTimer(randomf, () => CheckCvarsAndMaxVelo(), CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT);
 
             currentMapName = Server.MapName;
 
+            RegisterListener<Listeners.CheckTransmit>((CCheckTransmitInfoList infoList) =>
+            {
+                IEnumerable<CCSPlayerController> players = Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller");
+
+                if (!players.Any())
+                    return;
+
+                foreach ((CCheckTransmitInfo info, CCSPlayerController? player) in infoList)
+                {
+                    if (player == null || player.IsBot || !player.IsValid || player.IsHLTV)
+                        continue;
+
+                    if (!connectedPlayers.TryGetValue(player.Slot, out var connected) || connected == null)
+                        continue;
+
+                    if (!playerTimers.TryGetValue(player.Slot, out var timer) || timer == null || !timer.HidePlayers)
+                        continue;
+
+                    foreach (var target in Utilities.GetPlayers())
+                    {
+                        if (target == null || target.IsHLTV || target.IsBot || !target.IsValid)
+                            continue;
+
+                        var pawn = target.Pawn?.Value;
+                        if (pawn is null)
+                            continue;
+
+                        var playerPawn = player.Pawn.Value?.As<CCSPlayerPawnBase>().PlayerState;
+                        if (playerPawn == null || playerPawn == CSPlayerState.STATE_OBSERVER_MODE)
+                            continue;
+
+                        if (pawn == player.Pawn.Value)
+                            continue;
+
+                        if ((LifeState_t)pawn.LifeState != LifeState_t.LIFE_ALIVE)
+                        {
+                            info.TransmitEntities.Remove(pawn);
+                            continue;
+                        }
+
+                        info.TransmitEntities.Remove(pawn);
+                    }
+                }
+            });
+
+            HookUserMessage(452, sound =>
+            {
+                foreach (var p in connectedPlayers)
+                {
+                    if (connectedPlayers.TryGetValue(p.Key, out var player))
+                    {
+                        if (player is null || !player.IsValid)
+                            return HookResult.Continue;
+                        
+                        if (playerTimers[player.Slot].HidePlayers)
+                            sound.Recipients.Remove(player);
+                    }
+                }
+                return HookResult.Continue;
+            }, HookMode.Pre);
+
+            HookUserMessage(369, sound =>
+            {
+                foreach (var p in connectedPlayers)
+                {
+                    if (connectedPlayers.TryGetValue(p.Key, out var player))
+                    {
+                        if (player is null || !player.IsValid)
+                            return HookResult.Continue;
+                        
+                        if (playerTimers[player.Slot].HidePlayers)
+                            sound.Recipients.Remove(player);
+                    }
+                }
+                return HookResult.Continue;
+            }, HookMode.Pre);
+
+            HookUserMessage(208, sound =>
+            {
+                foreach (var p in connectedPlayers)
+                {
+                    if (connectedPlayers.TryGetValue(p.Key, out var player))
+                    {
+                        if (player is null || !player.IsValid)
+                            return HookResult.Continue;
+                        
+                        if (playerTimers[player.Slot].HidePlayers)
+                            sound.Recipients.Remove(player);
+                    }
+                }
+                return HookResult.Continue;
+            }, HookMode.Pre);
+
+            // Apply Infinite Ammo by https://github.com/zakriamansoor47
+            RegisterEventHandler<EventWeaponFire>((@event, info) =>
+            {
+                if (@event.Userid == null || !@event.Userid.IsValid) return HookResult.Continue;
+
+                var player = @event.Userid;
+
+                if (!applyInfiniteAmmo)
+                    return HookResult.Continue;
+                
+                ApplyInfiniteClip(player);
+                ApplyInfiniteReserve(player);
+                return HookResult.Continue;
+            });
+            
             RegisterListener<Listeners.OnMapStart>(OnMapStartHandler);
 
             RegisterEventHandler<EventPlayerConnectFull>((@event, info) =>
@@ -76,6 +190,7 @@ namespace SharpTimer
                     if (player.IsValid && !player.IsBot)
                     {
                         OnPlayerConnect(player);
+                        _oldPlayerState[player.Index] = CSPlayerState.STATE_WELCOME;
                     }
                 }
                 return HookResult.Continue;
@@ -101,7 +216,18 @@ namespace SharpTimer
                     }
                     else if (player.IsValid && !player.IsBot)
                     {
-                        Server.NextFrame(() => InvalidateTimer(player));
+                        Server.NextFrame(() =>
+                        {
+                            InvalidateTimer(player);
+                            try
+                            {
+                                if (playerTimers[player.Slot].IsReplaying) StopReplay(player);
+                            }
+                            catch (Exception ex)
+                            {
+                                // playerTimers for requested player does not exist
+                            }
+                        });
                     }
                 }
                 return HookResult.Continue;
@@ -238,11 +364,60 @@ namespace SharpTimer
                 DamageHook();
             });
 
+            AddTimer(1.0f, AssignPlayerScoreboards, TimerFlags.REPEAT);
+
             AddCommandListener("say", OnPlayerChat);
             AddCommandListener("say_team", OnPlayerChat);
             AddCommandListener("jointeam", OnCommandJoinTeam);
 
             SharpTimerConPrint("Plugin Loaded");
+        }
+        
+        private void ApplyInfiniteClip(CCSPlayerController player)
+        {
+            var activeWeaponHandle = player.PlayerPawn.Value?.WeaponServices?.ActiveWeapon;
+            if (activeWeaponHandle?.Value != null)
+            {
+                activeWeaponHandle.Value.Clip1 = 100;
+            }
+        }
+
+        private void ApplyInfiniteReserve(CCSPlayerController player)
+        {
+            var activeWeaponHandle = player.PlayerPawn.Value?.WeaponServices?.ActiveWeapon;
+            if (activeWeaponHandle?.Value != null)
+            {
+                activeWeaponHandle.Value.ReserveAmmo[0] = 100;
+            }
+        }
+
+        private HookResult Hook_StateTransition(DynamicHook h)
+        {
+            var player = h.GetParam<CCSPlayerPawn>(0).OriginalController.Value;
+            var state = h.GetParam<CSPlayerState>(1);
+
+            if (player is null) return HookResult.Continue;
+
+            if (state != _oldPlayerState[player.Index])
+            {
+                if (state == CSPlayerState.STATE_OBSERVER_MODE || _oldPlayerState[player.Index] == CSPlayerState.STATE_OBSERVER_MODE)
+                {
+                    ForceFullUpdate(player);
+                }
+            }
+
+            _oldPlayerState[player.Index] = state;
+
+            return HookResult.Continue;
+        }
+        private void ForceFullUpdate(CCSPlayerController? player)
+        {
+            if (player is null || !player.IsValid) return;
+
+            var networkGameServer = networkServerService.GetIGameServer();
+            networkGameServer.GetClientBySlot(player.Slot)?.ForceFullUpdate();
+
+            player.PlayerPawn.Value?.Teleport(null, player.PlayerPawn.Value.EyeAngles, null);
         }
         private HookResult OnRunCommand(DynamicHook h)
         {
@@ -262,6 +437,16 @@ namespace SharpTimer
                     var moveBackward = getMovementButton.Contains("Backward");
                     var moveLeft = getMovementButton.Contains("Left");
                     var moveRight = getMovementButton.Contains("Right");
+                    var usingUse = getMovementButton.Contains("Use");
+
+                    // AC Stuff
+                    if (useAnticheat)
+                    {
+                        ParseInputs(player, baseCmd.GetSideMove(), moveLeft, moveRight);
+                        ParseStrafes(player, userCmd.GetViewAngles()!);
+                    }
+                    
+                    // Style Stuff
                     if ((playerTimers[player.Slot].IsTimerRunning || playerTimers[player.Slot].IsBonusTimerRunning) && playerTimers[player.Slot].currentStyle.Equals(2) && (moveLeft || moveRight)) //sideways
                     {
                         userCmd.DisableInput(h.GetParam<IntPtr>(movementPtr), 1536); //disable left (512) + right (1024) = 1536
@@ -308,6 +493,16 @@ namespace SharpTimer
                         baseCmd.DisableForwardMove(); //disable only forward movement
                         return HookResult.Changed;
                     }
+                    if ((playerTimers[player.Slot].IsTimerRunning || playerTimers[player.Slot].IsBonusTimerRunning) && playerTimers[player.Slot].currentStyle.Equals(11) && usingUse) //parachute
+                    {
+                        player.Pawn.Value!.GravityScale = 0.2f;
+                        return HookResult.Changed;
+                    }
+                    if ((playerTimers[player.Slot].IsTimerRunning || playerTimers[player.Slot].IsBonusTimerRunning) && playerTimers[player.Slot].currentStyle.Equals(11) && !usingUse) //parachute
+                    {
+                        player.Pawn.Value!.GravityScale = 1f;
+                        return HookResult.Changed;
+                    }
                     return HookResult.Changed;
                 }
                 catch (Exception)
@@ -327,7 +522,8 @@ namespace SharpTimer
             RemoveCommandListener("say_team", OnPlayerChat, HookMode.Pre);
             RemoveCommandListener("jointeam", OnCommandJoinTeam, HookMode.Pre);
 
-            if(isLinux) RunCommand.Unhook(OnRunCommand, HookMode.Pre);
+            if (isLinux) RunCommand.Unhook(OnRunCommand, HookMode.Pre);
+            StateTransition.Unhook(Hook_StateTransition, HookMode.Post);
 
             SharpTimerConPrint("Plugin Unloaded");
         }
