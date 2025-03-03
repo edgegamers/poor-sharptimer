@@ -871,6 +871,7 @@ namespace SharpTimer
                     playerTimers[playerSlot].CachedPB = $"{(pbTicks != 0 ? $" {FormatTime(pbTicks)}" : "")}";
                     playerTimers[playerSlot].CachedRank = ranking;
                     playerTimers[playerSlot].CachedMapPlacement = mapPlacement;
+                    cachedPlacements.Remove(playerSlot);
 
                     if (Mixin.Actain != null && player != null && player.IsValid) {
                         Mixin.Actain.getTagService()
