@@ -276,6 +276,7 @@ namespace SharpTimer
         public string? postgresPath;
         public string? PlayerStatsTable = "PlayerStats";
         public string? playerRecordsPath;
+        public string? playerStagesPath;
         public string? currentMapName;
         public string? currentAddonID;
         public string? defaultServerHostname = ConVar.Find("hostname")?.StringValue;
