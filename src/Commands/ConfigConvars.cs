@@ -897,6 +897,21 @@ namespace SharpTimer
 
             applyInfiniteAmmo = bool.TryParse(args, out bool value) ? value : args != "0" && applyInfiniteAmmo;
         }
+        
+        [ConsoleCommand("sharptimer_stage_times_path", "Path to the stage times folder. Default value : csgo cfg SharpTimer PlayerStageData")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerStageTimesPathConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString.Trim();
+
+            if (string.IsNullOrEmpty(args))
+            {
+                playerStagesPath = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerStageData");
+                return;
+            }
+
+            playerStagesPath = Path.Join(gameDir, args);
+        }
 
         [ConsoleCommand("sharptimer_use2Dspeed_enabled", "Default value: false")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]

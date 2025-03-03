@@ -491,7 +491,7 @@ namespace SharpTimer
             if (!IsAllowedPlayer(player)) return;
 
             string fileName = $"{currentMapName!.ToLower()}_stage_times.json";
-            string playerStageRecordsPath = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerStageData", fileName);
+            string playerStageRecordsPath = Path.Join(playerStagesPath, fileName);
 
             try
             {

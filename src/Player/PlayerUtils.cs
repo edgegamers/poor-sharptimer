@@ -201,7 +201,7 @@ namespace SharpTimer
         public async Task<(int, string)> GetStageTime(string steamId, int stageIndex)
         {
             string fileName = $"{currentMapName!.ToLower()}_stage_times.json";
-            string playerStageRecordsPath = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerStageData", fileName);
+            string playerStageRecordsPath = Path.Join(playerStagesPath, fileName);
 
             try
             {
