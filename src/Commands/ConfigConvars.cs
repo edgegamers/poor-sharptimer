@@ -1849,7 +1849,7 @@ namespace SharpTimer
                 return;
             }
             
-            Path.Join([gameDir, ..args.Split('/')]);
+            playerReplaysPath = Path.Join([gameDir, ..args.Split('/')]);
         }
     }
 }
