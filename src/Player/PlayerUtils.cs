@@ -610,7 +610,7 @@ namespace SharpTimer
                     {
                         timeDifference = $"[{FormatTimeDifference(newticks, prevSR)}{ChatColors.White}] ";
                     }
-                    PrintToChatAll(Localizer["new_stage_server_record", playerName]);
+                    PrintToChatAll(Localizer["new_stage_server_record", playerName, stage]);
                     if (stageSoundAll) SendCommandToEveryone($"play {srSound}");
                     else PlaySound(player, srSound);
                     PrintToChatAll(Localizer["timer_time", newTime, timeDifference]);
