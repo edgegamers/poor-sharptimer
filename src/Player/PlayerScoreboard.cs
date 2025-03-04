@@ -39,7 +39,7 @@ public partial class SharpTimer {
     if (!cachedPlacements.TryGetValue(slot, out var placement))
       fetchPlayerPlacement(slot, player.SteamID.ToString());
     else
-      player.Score = -(placement == 0 ? 99999 : placement);
+      player.Score = -placement;
 
     if (stageTriggerCount <= 1) { // Linear map, show checkpoints
       matchStats.Kills = timer.CurrentMapCheckpoint;
