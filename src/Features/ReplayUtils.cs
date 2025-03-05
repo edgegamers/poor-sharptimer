@@ -223,9 +223,8 @@ namespace SharpTimer
 
                 string fileName = $"{steamID}_replay.json";
                 string playerReplaysDirectory;
-                if (style != 0) playerReplaysDirectory = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerReplayData", bonusX == 0 ? $"{currentMapName}" : $"{currentMapName}_bonus{bonusX}", GetNamedStyle(style));
-                else playerReplaysDirectory = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerReplayData", bonusX == 0 ? $"{currentMapName}" : $"{currentMapName}_bonus{bonusX}");
-                string playerReplaysPath = Path.Join(playerReplaysDirectory, fileName);
+                if(style != 0) playerReplaysDirectory = Path.Join(this.playerReplaysPath, bonusX == 0 ? $"{currentMapName}" : $"{currentMapName}_bonus{bonusX}", GetNamedStyle(style));
+                else playerReplaysDirectory = Path.Join(this.playerReplaysPath, bonusX == 0 ? $"{currentMapName}" : $"{currentMapName}_bonus{bonusX}");
 
                 try
                 {
