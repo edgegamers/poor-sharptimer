@@ -890,6 +890,7 @@ namespace SharpTimer
                     stageTriggers.Clear();
                     stageTriggerAngs.Clear();
                     stageTriggerPoses.Clear();
+                    cachedPlacements.Clear();
 
                     KillServerCommandEnts();
                     globalDisabled = false;
