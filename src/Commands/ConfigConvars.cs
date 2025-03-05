@@ -1851,5 +1851,14 @@ namespace SharpTimer
             
             playerReplaysPath = Path.Join([gameDir, ..args.Split('/')]);
         }
+        
+        [ConsoleCommand("sharptimer_replays_use_binary", "Save replays as binary files instead of json. Default value: false")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerReplaysUseBinary(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            useBinaryReplays = bool.TryParse(args, out bool useBinaryReplaysValue) ? useBinaryReplaysValue : args != "0" && useBinaryReplays;
+        }
     }
 }
