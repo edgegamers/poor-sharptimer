@@ -221,10 +221,11 @@ namespace SharpTimer
                     return;
                 }
 
-                string fileName = $"{steamID}_replay.json";
+                string fileName = $"{steamID}_replay.dat";
                 string playerReplaysDirectory;
                 if(style != 0) playerReplaysDirectory = Path.Join(this.playerReplaysPath, bonusX == 0 ? $"{currentMapName}" : $"{currentMapName}_bonus{bonusX}", GetNamedStyle(style));
                 else playerReplaysDirectory = Path.Join(this.playerReplaysPath, bonusX == 0 ? $"{currentMapName}" : $"{currentMapName}_bonus{bonusX}");
+                string replayFilePath = Path.Join(playerReplaysDirectory, fileName);
 
                 try
                 {
@@ -239,7 +240,7 @@ namespace SharpTimer
                         .Select((frame, index) => new IndexedReplayFrames { Index = index, Frame = frame })
                         .ToList();
 
-                    using Stream stream = new FileStream(playerReplaysPath, FileMode.Create);
+                    using Stream stream = new FileStream(replayFilePath, FileMode.Create);
                     BinaryWriter writer = new BinaryWriter(stream);
                     
                     writer.Write(REPLAY_VERSION);
@@ -294,6 +295,7 @@ namespace SharpTimer
 
         private async Task ReadReplayFromJson(CCSPlayerController player, string steamId, int playerSlot, int bonusX = 0, int style = 0)
         {
+            SharpTimerDebug($"Reading replay from JSON");
             string fileName = $"{steamId}_replay.json";
             string playerReplaysPath;
             if(style != 0) playerReplaysPath = Path.Join(this.playerReplaysPath, bonusX == 0 ? currentMapName : $"{currentMapName}_bonus{bonusX}", GetNamedStyle(style), fileName);
@@ -303,6 +305,7 @@ namespace SharpTimer
             {
                 if (File.Exists(playerReplaysPath))
                 {
+                    SharpTimerDebug($"Path: {playerReplaysPath}, creating stream");
                     var jsonString = await File.ReadAllTextAsync(playerReplaysPath);
                     if (!jsonString.Contains("PositionString"))
                     {
@@ -338,11 +341,13 @@ namespace SharpTimer
             catch (Exception ex)
             {
                 SharpTimerError($"Error during deserialization: {ex.Message}");
+                SharpTimerError($"Error during deserialization: {ex.StackTrace}");
             }
         }
         
         private async Task ReadReplayFromBinary(CCSPlayerController player, string steamId, int playerSlot, int bonusX = 0, int style = 0)
         {
+            SharpTimerDebug($"Reading replay from Binary");
             string fileName = $"{steamId}_replay.dat";
             string playerReplaysPath;
             if(style != 0) playerReplaysPath = Path.Join(this.playerReplaysPath, bonusX == 0 ? currentMapName : $"{currentMapName}_bonus{bonusX}", GetNamedStyle(style), fileName);
@@ -357,6 +362,8 @@ namespace SharpTimer
                     return;
                 }
                 
+                SharpTimerDebug($"Path: {playerReplaysPath}, creating stream");
+                
                 using Stream stream = new FileStream(playerReplaysPath, FileMode.Open);
                 BinaryReader reader = new BinaryReader(stream);
                 
@@ -370,25 +377,27 @@ namespace SharpTimer
                    
                 var replayFrames = new List<PlayerReplays.ReplayFrames>();
                 
-                while (reader.BaseStream.Position != reader.BaseStream.Length)
-                {
-                    var position = new Vector(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-                    var rotation = new QAngle(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-                    var speed = new Vector(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-                    var buttons = (PlayerButtons)reader.ReadInt32();
-                    var flags = (uint)reader.ReadInt32();
-                    var moveType = (MoveType_t)reader.ReadInt32();
-                    
-                    replayFrames.Add(new PlayerReplays.ReplayFrames
+                await Server.NextFrameAsync(() => {
+                    while (reader.BaseStream.Position != reader.BaseStream.Length)
                     {
-                        Position = ReplayVector.GetVectorish(position),
-                        Rotation = ReplayQAngle.GetQAngleish(rotation),
-                        Speed = ReplayVector.GetVectorish(speed),
-                        Buttons = buttons,
-                        Flags = flags,
-                        MoveType = moveType
-                    });
-                }
+                            var position = new Vector(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                            var rotation = new QAngle(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                            var speed = new Vector(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                            var buttons = (PlayerButtons)reader.ReadInt32();
+                            var flags = (uint)reader.ReadInt32();
+                            var moveType = (MoveType_t)reader.ReadInt32();
+                        
+                            replayFrames.Add(new PlayerReplays.ReplayFrames
+                            {
+                                Position = ReplayVector.GetVectorish(position),
+                                Rotation = ReplayQAngle.GetQAngleish(rotation),
+                                Speed    = ReplayVector.GetVectorish(speed),
+                                Buttons  = buttons,
+                                Flags    = flags,
+                                MoveType = moveType
+                            });
+                    }
+                });
                 
                 if (!playerReplays.TryGetValue(playerSlot, out PlayerReplays? value))
                 {
@@ -401,6 +410,7 @@ namespace SharpTimer
             catch (Exception ex)
             {
                 SharpTimerError($"Error during deserialization: {ex.Message}");
+                SharpTimerError($"Error during deserialization: {ex.StackTrace}");
             }
         }
 
