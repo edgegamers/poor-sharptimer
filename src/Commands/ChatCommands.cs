@@ -1110,6 +1110,7 @@ namespace SharpTimer
         }
 
         [ConsoleCommand("css_stage", "Teleports you to a stage")]
+        [ConsoleCommand("css_s", "Teleports you to a stage")]
         [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
         public void TPtoStagePlayer(CCSPlayerController? player, CommandInfo command)
         {
