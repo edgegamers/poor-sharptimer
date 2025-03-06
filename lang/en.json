@@ -32,6 +32,7 @@
   "stages_unavalible": "Stages unavalible",
   "stages_unavalible_respawnpos": "{lightred}No RespawnStagePos with index {0} found for current map!",
   "stages_enter_valid": "Please enter a valid stage i.e: {lime}!stage <index>",
+  "stages_entrance_message": "Entering stage {lime}{0}",
   "map_no_stages": "{lightred}Current map has no stages!",
 
   //rank
