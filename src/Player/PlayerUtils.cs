@@ -549,7 +549,7 @@ namespace SharpTimer
                     if (bonusX != 0) PrintToChatAll(Localizer["new_server_record_bonus", playerName, bonusX]);
                     else
                     {
-                        PrintToChatAll(Localizer["new_server_record", playerName]);
+                        PrintToChatAll(Localizer[ enableStyles && style != 0 ? "new_server_record_style" : "new_server_record", playerName, GetNamedStyle(style)]);
                         if (srSoundAll) SendCommandToEveryone($"play {srSound}");
                         else PlaySound(player, srSound);
                     }
@@ -574,7 +574,7 @@ namespace SharpTimer
                     PrintToChatAll(Localizer["map_finish_rank", ranking, timesFinished]);
 
                 PrintToChatAll(Localizer["timer_time", newTime, timeDifference]);
-                if (enableStyles) PrintToChatAll(Localizer["timer_style", GetNamedStyle(style)]);
+                // if (enableStyles) PrintToChatAll(Localizer["timer_style", GetNamedStyle(style)]);
                 if (enableReplays == true && enableSRreplayBot == true && newSR && (oldticks > newticks || oldticks == 0))
                 {
                     _ = Task.Run(async () => await SpawnReplayBot());
