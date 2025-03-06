@@ -262,7 +262,7 @@ namespace SharpTimer
 
                             if (previousStageTime != 0)
                             {
-                                PrintToChat(player, $"Entering Stage: {stageTrigger}");
+                                PrintToChat(player, Localizer["stages_entrance_message", stageTrigger]);
                                 PrintToChat(player, $"Time: {ChatColors.White}[{primaryChatColor}{formattedStageTicks}{ChatColors.White}] " +
                                                                $" [{FormatTimeDifference(playerStageTicks, previousStageTime)}{ChatColors.White}]" +
                                                                $" {(previousStageTime != srStageTime ? $"[SR {FormatTimeDifference(playerStageTicks, srStageTime)}{ChatColors.White}]" : "")}");

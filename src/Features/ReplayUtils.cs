@@ -563,7 +563,8 @@ namespace SharpTimer
 
             if ((srSteamID == "null" || srPlayerName == "null" || srTime == "null") && topSteamID != "x") return false;
 
-            string fileName = $"{(topSteamID == "x" ? $"{srSteamID}" : $"{topSteamID}")}_replay.json";
+            string ext = useBinaryReplays ? "dat" : "json";
+            string fileName = $"{(topSteamID == "x" ? $"{srSteamID}" : $"{topSteamID}")}_replay.{ext}";
             string playerReplaysPath;
             if(style != 0) playerReplaysPath = Path.Join(this.playerReplaysPath, (bonusX == 0 ? currentMapName : $"{currentMapName}_bonus{bonusX}"), GetNamedStyle(style), fileName);
             else playerReplaysPath = Path.Join(this.playerReplaysPath, (bonusX == 0 ? currentMapName : $"{currentMapName}_bonus{bonusX}"), fileName);
