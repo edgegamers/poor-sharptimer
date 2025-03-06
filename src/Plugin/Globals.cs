@@ -163,7 +163,6 @@ namespace SharpTimer
         public double group4 = 25;
         public double group5 = 50;
 
-
         public bool globalChecksPassed = false;
         public bool globalDisabled = false;
         public bool displayChatTags = true;
@@ -306,6 +305,8 @@ namespace SharpTimer
         public bool discordWebhookSteamLink = true;
         public bool discordWebhookDisableStyleRecords = false;
 
+        public string timerSize = "fontSize-l", velocitySize = "fontSize-ml", labelSize = "fontSize-s", syncSize = "fontSize-ml";
+        
         public string? remoteBhopDataSource = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/bhop_.json";
         public string? remoteKZDataSource = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/kz_.json";
         public string? remoteSurfDataSource = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/surf_.json";
