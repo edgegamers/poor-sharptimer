@@ -18,6 +18,7 @@
   "new_server_record_style": "{lime}{0} {white}set a new {1} SR!",
   "new_stage_server_record": "{lime}{0} {white}set a new stage {1} record!",
   "new_server_record_bonus": "{lime}{0} {white}set a new Bonus {1} SR!",
+  "new_server_record_bonus_style": "{lime}{0} {white}set a new Bonus {1} {2} SR!",
   "new_pb_record": "{lime}{0} {white}set a new Map PB!",
   "new_pb_record_bonus": "{lime}{0} {white}set a new Bonus {1} PB!",
   "map_finish": "{lime}{0} {white}finished the map!",

@@ -546,7 +546,7 @@ namespace SharpTimer
                     {
                         timeDifference = $"[{FormatTimeDifference(newticks, prevSR)}{ChatColors.White}] ";
                     }
-                    if (bonusX != 0) PrintToChatAll(Localizer["new_server_record_bonus", playerName, bonusX]);
+                    if (bonusX != 0) PrintToChatAll(Localizer[enableStyles && style != 0 ? "new_server_record_bonus_style" : "new_server_record_bonus", playerName, bonusX, GetNamedStyle(style)]);
                     else
                     {
                         PrintToChatAll(Localizer[ enableStyles && style != 0 ? "new_server_record_style" : "new_server_record", playerName, GetNamedStyle(style)]);
