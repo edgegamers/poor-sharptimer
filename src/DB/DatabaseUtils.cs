@@ -2048,7 +2048,8 @@ namespace SharpTimer
                         switch (dbType)
                         {
                             case DatabaseType.MySQL:
-                                query = $@"SELECT PlayerName, GlobalPoints FROM {PlayerStatsTable} ORDER BY GlobalPoints DESC LIMIT 10";
+                                // query = $@"SELECT PlayerName, GlobalPoints FROM {PlayerStatsTable} ORDER BY GlobalPoints DESC LIMIT 10";
+                                query = $@"SELECT PlayerName, GlobalPoints FROM PlayerLeaderboard ORDER BY Points DESC LIMIT 10";
                                 command = new MySqlCommand(query, (MySqlConnection)connection);
                                 break;
                             case DatabaseType.PostgreSQL:
@@ -2625,7 +2626,7 @@ namespace SharpTimer
                     switch (dbType)
                     {
                         case DatabaseType.MySQL:
-                            selectQuery = $"SELECT GlobalPoints FROM {PlayerStatsTable} WHERE SteamID = @SteamID";
+                            selectQuery = $"SELECT GlobalPoints FROM PlayerLeaderboard WHERE SteamID = @SteamID";
                             selectCommand = new MySqlCommand(selectQuery, (MySqlConnection)connection);
                             break;
                         case DatabaseType.PostgreSQL:
@@ -2979,7 +2980,7 @@ namespace SharpTimer
                     switch (dbType)
                     {
                         case DatabaseType.MySQL:
-                            selectQuery = $@"SELECT SteamID, PlayerName, GlobalPoints FROM {PlayerStatsTable}";
+                            selectQuery = $@"SELECT SteamID, PlayerName, GlobalPoints FROM PlayerLeaderboard ORDER BY GlobalPoints DESC";
                             selectCommand = new MySqlCommand(selectQuery, (MySqlConnection)connection);
                             break;
                         case DatabaseType.PostgreSQL:
@@ -3017,11 +3018,8 @@ namespace SharpTimer
                                 }
                             }
 
-                            sortedPoints = sortedPoints.OrderByDescending(record => record.Value.GlobalPoints)
-                                                        .ToDictionary(record => record.Key, record => record.Value);
-
-
-
+                            // sortedPoints = sortedPoints.OrderByDescending(record => record.Value.GlobalPoints)
+                            //                             .ToDictionary(record => record.Key, record => record.Value);
                             return sortedPoints;
                         }
                     }
