@@ -4,6 +4,13 @@ SELECT `PlayerRecords`.`MapName`            AS `MapName`,
 FROM `PlayerRecords`
 GROUP BY `PlayerRecords`.`MapName`;
 
+CREATE TABLE IF NOT EXISTS MapTiers
+(
+    MapName VARCHAR(255)  NOT NULL
+        PRIMARY KEY,
+    Tier    INT DEFAULT 1 NOT NULL
+);
+
 CREATE VIEW IF NOT EXISTS cs2_surf.MapWRs AS
 SELECT `Map`.`MapName`                                      AS `MapName`,
        GREATEST(`TP`.`MaxPoints`,
