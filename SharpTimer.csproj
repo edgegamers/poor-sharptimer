@@ -16,7 +16,7 @@
     <PackageReference Include="System.Data.SQLite" Version="1.0.118"/>
   </ItemGroup>
   <ItemGroup>
-    <Content Include=".github\workflows\build.yml"/>
+    <Content Include=".github\workflows\nightly.yml" />
     <Content Include="lang\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>lang\%(RecursiveDir)%(Filename)%(Extension)</Link>

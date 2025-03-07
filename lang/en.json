@@ -24,6 +24,7 @@
   "map_finish": "{lime}{0} {white}finished the map!",
   "map_finish_bonus": "{lime}{0} {white}finished the Bonus {1}!",
   "map_finish_rank": "Rank: [{lime}{0}{default}] Times Finished: [{lime}{1}{default}]",
+  "map_finish_group": "Group: {orchid}{0}",
   "top10_records": "Top 10 {0} Records for {1}:",
   "top10_records_bonus": "Top 10 {0} Records for Bonus {1} on {2}:",
 
@@ -39,7 +40,7 @@
   //rank
   "current_rank": "You are currently {0}{1}{lime}",
   "current_rank_points": "{default}({lime}{0}{default}) [{lime}{1}{default}]",
-  "current_pb": "Your current PB on {lime}{0}{default}: {lime}{1}{default} [{lime}{2}{default}]",
+  "current_pb": "Your current PB on {lime}{0}{default}: {lime}{1}{default} [{lime}{2}{default}] Group: {lime}{3}",
   "current_bonus_pb": "Your current PB on {lime}Bonus {0}{default}: {lime}{1}{default} [{lime}{2}{default}]",
   "current_sr": "Current Server Record on {lime}{0}{white}:",
   "current_sr_player": "{lime}{0} {white}- {lime}{1}",

@@ -1643,7 +1643,7 @@ namespace SharpTimer
 
         public void GainPointsMessage(string playerName, double newPoints, double playerPoints)
         {
-            PrintToChatAll(Localizer["gained_points", playerName, Convert.ToInt32(newPoints - playerPoints), newPoints]);
+            // PrintToChatAll(Localizer["gained_points", playerName, Convert.ToInt32(newPoints - playerPoints), newPoints]);
         }
 
         public (string, int) FixMapAndBonus(string mapName)
@@ -2048,7 +2048,8 @@ namespace SharpTimer
                         switch (dbType)
                         {
                             case DatabaseType.MySQL:
-                                query = $@"SELECT PlayerName, GlobalPoints FROM {PlayerStatsTable} ORDER BY GlobalPoints DESC LIMIT 10";
+                                // query = $@"SELECT PlayerName, GlobalPoints FROM {PlayerStatsTable} ORDER BY GlobalPoints DESC LIMIT 10";
+                                query = $@"SELECT PlayerName, GlobalPoints FROM PlayerLeaderboard ORDER BY GlobalPoints DESC LIMIT 10";
                                 command = new MySqlCommand(query, (MySqlConnection)connection);
                                 break;
                             case DatabaseType.PostgreSQL:
@@ -2625,7 +2626,7 @@ namespace SharpTimer
                     switch (dbType)
                     {
                         case DatabaseType.MySQL:
-                            selectQuery = $"SELECT GlobalPoints FROM {PlayerStatsTable} WHERE SteamID = @SteamID";
+                            selectQuery = $"SELECT GlobalPoints FROM PlayerLeaderboard WHERE SteamID = @SteamID";
                             selectCommand = new MySqlCommand(selectQuery, (MySqlConnection)connection);
                             break;
                         case DatabaseType.PostgreSQL:
@@ -2979,7 +2980,7 @@ namespace SharpTimer
                     switch (dbType)
                     {
                         case DatabaseType.MySQL:
-                            selectQuery = $@"SELECT SteamID, PlayerName, GlobalPoints FROM {PlayerStatsTable}";
+                            selectQuery = $@"SELECT SteamID, PlayerName, GlobalPoints FROM PlayerLeaderboard ORDER BY GlobalPoints DESC";
                             selectCommand = new MySqlCommand(selectQuery, (MySqlConnection)connection);
                             break;
                         case DatabaseType.PostgreSQL:
@@ -3005,7 +3006,7 @@ namespace SharpTimer
                             {
                                 string steamId = reader.GetString(0);
                                 string playerName = reader.IsDBNull(1) ? "Unknown" : reader.GetString(1);
-                                int globalPoints = reader.GetInt32(2);
+                                int globalPoints = Convert.ToInt32(reader["GlobalPoints"]);
 
                                 if (globalPoints >= minGlobalPointsForRank) // Only add if GlobalPoints is above or equal to minGlobalPointsForRank
                                 {
@@ -3017,11 +3018,8 @@ namespace SharpTimer
                                 }
                             }
 
-                            sortedPoints = sortedPoints.OrderByDescending(record => record.Value.GlobalPoints)
-                                                        .ToDictionary(record => record.Key, record => record.Value);
-
-
-
+                            // sortedPoints = sortedPoints.OrderByDescending(record => record.Value.GlobalPoints)
+                            //                             .ToDictionary(record => record.Key, record => record.Value);
                             return sortedPoints;
                         }
                     }

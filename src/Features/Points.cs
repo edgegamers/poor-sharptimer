@@ -126,5 +126,62 @@ namespace SharpTimer
                 _ => 0,
             };
         }
+
+        public string FormatGroup(int placement, double percentile) {
+            percentile *= 100;
+            if (placement <= 10)
+                return placement switch {
+                    1   => "First",
+                    2   => "Second",
+                    3   => "Third",
+                    > 0 => placement + "th",
+                    _   => "N/A"
+                };
+
+            if (percentile > 0.5) return "N/A";
+            
+            return percentile switch {
+                double p when p <= 3.125 => "Group 1",
+                double p when p <= 6.25 => "Group 2",
+                double p when p <= 12.5 => "Group 3",
+                double p when p <= 25 => "Group 4",
+                double p when p <= 50 => "Group 5",
+                _ => "N/A"
+            };
+        }
+        
+        public int GetGroupIndex(double percentile, bool forGlobal = false)
+        {
+            // double baseMultiplier = points * 0.25;
+            double divisor = 1.5;
+            
+            double threshold1, threshold2, threshold3, threshold4, threshold5;
+            if (forGlobal)
+            {
+                threshold1 = 3.125;
+                threshold2 = 6.25;
+                threshold3 = 12.5;
+                threshold4 = 25;
+                threshold5 = 50;
+            }
+            else
+            {
+                threshold1 = group1;
+                threshold2 = group2;
+                threshold3 = group3;
+                threshold4 = group4;
+                threshold5 = group5;
+            }
+
+            return percentile switch
+            {
+                double p when p <= threshold1 => 1,
+                double p when p <= threshold2 => 2,
+                double p when p <= threshold3 => 3,
+                double p when p <= threshold4 => 4,
+                double p when p <= threshold5 => 5,
+                _ => 0,
+            };
+        }
     }
 }
