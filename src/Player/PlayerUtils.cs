@@ -528,7 +528,7 @@ namespace SharpTimer
             string ranking = await GetPlayerMapPlacementWithTotal(player, steamID, playerName, false, true, bonusX, style);
             SharpTimerDebug($"Player {playerName} finished map with time {newticks} ticks, placing {ranking}");
             var percentile = await GetPlayerMapPercentile(steamID, playerName, currentMapName!, bonusX, style, false, newticks);
-            int.TryParse(ranking[1..ranking.IndexOf('/')], out int position);
+            int.TryParse(ranking[..ranking.IndexOf('/')], out int position);
 
             bool newSR = GetNumberBeforeSlash(ranking) == 1 && (oldticks > newticks || oldticks == 0);
             bool beatPB = oldticks > newticks;
