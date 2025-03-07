@@ -131,10 +131,11 @@ namespace SharpTimer
             percentile *= 100;
             if (placement <= 10)
                 return placement switch {
-                    1 => "First",
-                    2 => "Second",
-                    3 => "Third",
-                    _ => "#" + placement + "th"
+                    1   => "First",
+                    2   => "Second",
+                    3   => "Third",
+                    > 0 => placement + "th",
+                    _   => "N/A"
                 };
 
             if (percentile > 0.5) return "N/A";

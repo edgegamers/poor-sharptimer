@@ -842,7 +842,7 @@ namespace SharpTimer
                     await GetPlayerMapPercentile(steamId, playerName);
                 
                 SharpTimerDebug("Ranking: " + mapPlacement);
-                var position = int.Parse(mapPlacement[..mapPlacement.IndexOf('/')]);
+                int.TryParse(mapPlacement[..Math.Max(mapPlacement.IndexOf('/'), 0)], out var position);
 
                 foreach (var bonusRespawnPose in bonusRespawnPoses)
                 {
@@ -921,7 +921,7 @@ namespace SharpTimer
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in RankCommandHandler: {ex}");
+                SharpTimerError($"Error in RankCommandHandler: {ex} {ex.StackTrace}");
             }
         }
 
