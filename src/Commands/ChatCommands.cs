@@ -838,6 +838,11 @@ namespace SharpTimer
                 ranking      = useGlobalRanks ? await GetPlayerServerPlacement(steamId, playerName) : await GetPlayerMapPlacementWithTotal(player, steamId, playerName, false, false, 0, style);
                 rankIcon     = useGlobalRanks ? await GetPlayerServerPlacement(steamId, playerName, true) : await GetPlayerMapPlacementWithTotal(player, steamId, playerName, true, false, 0, style);
                 mapPlacement = await GetPlayerMapPlacementWithTotal(player, steamId, playerName, false, true, 0, style);
+                var percentile =
+                    await GetPlayerMapPercentile(steamId, playerName);
+                
+                SharpTimerDebug("Ranking: " + mapPlacement);
+                var position = int.Parse(mapPlacement[..mapPlacement.IndexOf('/')]);
 
                 foreach (var bonusRespawnPose in bonusRespawnPoses)
                 {
@@ -900,8 +905,9 @@ namespace SharpTimer
 
                         PrintToChat(player, rankMessage);
 
-                        if (pbTicks != 0)
-                            PrintToChat(player, Localizer["current_pb", currentMapName!, FormatTime(pbTicks), mapPlacement]);
+                        if (pbTicks != 0) {
+                            PrintToChat(player, Localizer["current_pb", currentMapName!, FormatTime(pbTicks), mapPlacement, FormatGroup(position, percentile)]);
+                        }
                         
                         if (playerTimers[playerSlot].CachedBonusInfo.Any())
                         {

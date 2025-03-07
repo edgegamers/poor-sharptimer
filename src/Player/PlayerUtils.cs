@@ -526,6 +526,9 @@ namespace SharpTimer
             }
 
             string ranking = await GetPlayerMapPlacementWithTotal(player, steamID, playerName, false, true, bonusX, style);
+            var position =
+                int.Parse(ranking.Substring(0, ranking.IndexOf('/')));
+            var percentile = await GetPlayerMapPercentile(steamID, playerName, currentMapName!, bonusX, style, false, newticks);
 
             bool newSR = GetNumberBeforeSlash(ranking) == 1 && (oldticks > newticks || oldticks == 0);
             bool beatPB = oldticks > newticks;
@@ -570,11 +573,12 @@ namespace SharpTimer
                     PlaySound(player, timerSound);
                 }
 
-                if (enableDb || bonusX != 0)
+                if (enableDb || bonusX != 0) {
                     PrintToChatAll(Localizer["map_finish_rank", ranking, timesFinished]);
+                    PrintToChatAll(Localizer["map_finish_group", FormatGroup(position, percentile)]);
+                }
 
                 PrintToChatAll(Localizer["timer_time", newTime, timeDifference]);
-                // if (enableStyles) PrintToChatAll(Localizer["timer_style", GetNamedStyle(style)]);
                 if (enableReplays == true && enableSRreplayBot == true && newSR && (oldticks > newticks || oldticks == 0))
                 {
                     _ = Task.Run(async () => await SpawnReplayBot());
