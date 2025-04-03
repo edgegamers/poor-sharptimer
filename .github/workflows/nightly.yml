@@ -60,7 +60,7 @@ jobs:
       - name: Set version tag and zip file name
         id: version
         run: |
-          VERSION="v1.0.${{ github.run_number }}"
+          VERSION="v1.1.${{ github.run_number }}"
           if [[ $GITHUB_REF == 'refs/heads/dev' ]]; then
             TAG="Prerelease $VERSION"
           else
