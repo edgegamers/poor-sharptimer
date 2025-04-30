@@ -76,7 +76,7 @@ SELECT `Ranks`.`SteamID`                                      AS `SteamID`,
        `MT`.`MapName`                                         AS `MapName`,
        `Ranks`.`Percentile`                                   AS `Percentile`,
        CASE
-           WHEN `Ranks`.`Percentile` < 0.5 THEN CASE `Ranks`.`Rank`
+           WHEN `Ranks`.`Rank` <= 10 THEN CASE `Ranks`.`Rank`
                                                     WHEN 1 THEN `MWR`.`WR`
                                                     WHEN 2 THEN `MWR`.`Rank2`
                                                     WHEN 3 THEN `MWR`.`Rank3`
