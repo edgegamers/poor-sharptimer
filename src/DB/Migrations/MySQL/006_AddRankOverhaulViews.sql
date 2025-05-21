@@ -107,6 +107,7 @@ FROM ((`PlayerRanks` `Ranks` JOIN `MapWRs` `MWR`
 
 CREATE VIEW IF NOT EXISTS cs2_surf.PlayerLeaderboard AS
 SELECT `PP`.`SteamID` AS `SteamID`, `PR`.`PlayerName` AS `PlayerName`, SUM(`PP`.`Points`) AS `GlobalPoints`
-FROM (`PlayerPoints` `PP` JOIN `PlayerRecords` `PR` ON (`PP`.`SteamID` = `PR`.`SteamID`))
-GROUP BY `PP`.`SteamID`;
+FROM (`cs2_surf`.`PlayerPoints` `PP` JOIN `cs2_surf`.`PlayerRecords` `PR` ON (`PP`.`SteamID` = `PR`.`SteamID` AND `PR`.Style = 0))
+GROUP BY `PR`.`SteamID`;
+
 
