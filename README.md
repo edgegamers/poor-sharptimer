@@ -1,9 +1,18 @@
+<a name="readme-top"></a>
+<div align="center">
+	
+![GitHub Repo stars](https://img.shields.io/github/stars/Letaryat/poor-sharptimer?style=for-the-badge)
+![GitHub all releases](https://img.shields.io/github/downloads/Letaryat/poor-sharptimer/total?style=for-the-badge)
+</div>
+
 > [!NOTE]
-> The original creator of SharpTimer is dea_bb, who discontinued support for the project after version 0.2.6. This fork is now maintaned by the community, mainly [rcnoob](https://github.com/rcnoob).
+> The original creator of SharpTimer is [Dea](https://github.com/girlglock), who discontinued support for the project after version 0.2.6. This fork is now maintaned by the community, mainly [rcnoob](https://github.com/rcnoob).
 
 
 
-[**Discord**](https://discord.com/invite/SmQXeyMcny)
+## **Join Our Discord For Support**
+
+<a href="https://discord.com/invite/SmQXeyMcny"><img src="https://discord.com/api/guilds/1196646791450472488/widget.png?style=banner2"></a>
 
 <div align="center">
   <img src="https://files.catbox.moe/qvawnf.png" alt="" style="margin: 0;">
@@ -80,6 +89,8 @@ SharpTimer is a "simple" Surf/KZ/Bhop/MG/Deathrun/etc. CS2 Timer plugin using Co
    <img src="https://i.imgur.com/nyn76Q4.png">
 </details>
 
+<p align="right">(<a href="#readme-top"> back to top </a>)</p>
+
 ## Dependencies
 
 [**MetaMod**](https://cs2.poggu.me/metamod/installation/)
@@ -100,9 +111,9 @@ SharpTimer is a "simple" Surf/KZ/Bhop/MG/Deathrun/etc. CS2 Timer plugin using Co
 
 [**Flashing HUD Fix** *(optional but recommended)*](https://github.com/M-archand/CS2FlashingHtmlHudFix)
 
-[**SharpTimer-WallLists** *(optional)*](https://github.com/M-archand/SharpTimer-WallLists)
+[**SharpTimer-WallLists** *(optional)*](https://github.com/SharpTimer/WallLists)
 
-[**SharpTimer-Trails** *(optional)*](https://github.com/M-archand/SharpTimer-Trails)
+[**SharpTimer-Trails** *(optional)*](https://github.com/SharpTimer/Trails)
 
 
 ## Install
@@ -164,15 +175,16 @@ SharpTimer is a "simple" Surf/KZ/Bhop/MG/Deathrun/etc. CS2 Timer plugin using Co
     - [x] Jump Bug
     - [ ] Edge Bug
     - [ ] Ladder Jump
-- [ ] Silly Stuff
+- [X] Silly Stuff
   - [x] Color customization
   - [x] Special Tester Gifs
   - [x] Custom Player Gifs
   - [x] Dioscord Webhook
-  - [ ] Strafe Sync Bar on HUD
-
+  - [X] Strafe Sync Bar on HUD
 
 ## Authors:
-[DEA_BB](https://twitter.com/dea_bb)
+[Deana](https://twitter.com/girlglock)
 [Letaryat](https://github.com/Letaryat)
 [rcnoob](https://github.com/rcnoob)
+
+<p align="right">(<a href="#readme-top"> back to top </a>)</p>
