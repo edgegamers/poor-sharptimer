@@ -63,10 +63,25 @@ public partial class SharpTimer : BasePlugin
         movementPtr = isLinux ? 1 : 2;
         RunCommand = isLinux ? new RunCommandLinux() : new RunCommandWindows();
 
-        if (isLinux)
-            RunCommand?.Hook(OnRunCommandPre, HookMode.Pre);
+        try
+        {
+            if (isLinux)
+                RunCommand.Hook(OnRunCommand, HookMode.Pre);
+        }
+        catch (Exception)
+        {
+            Utils.LogError($"RunCommand hook failed. Signature is likely outdated. Check for the latest stgamedata.json file on GitHub. Movement features disabled until updated.");
+        }
 
-        StateTransition.Hook(Hook_StateTransition, HookMode.Post);
+        try
+        {
+            StateTransition.Hook(Hook_StateTransition, HookMode.Post);
+        }
+        catch (Exception)
+        {
+            Utils.LogError($"StateTransition hook failed. Signature is likely outdated. Check for the latest stgamedata.json file on GitHub. State tracking features disabled until updated.");
+        }
+        
         RemoveDamage?.Hook();
 
         RegisterListener<Listeners.OnMapStart>(OnMapStartHandler);
