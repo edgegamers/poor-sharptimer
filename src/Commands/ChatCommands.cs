@@ -1596,6 +1596,8 @@ namespace SharpTimer
             // fix timer toggle bug
             if (!playerTimers[slot].IsTimerBlocked)
             {
+                // Teleport player to start when resuming timer to prevent exploit
+                RespawnPlayer(player);
                 Vector_t playerPos = player.Pawn?.Value!.CBodyComponent?.SceneNode!.AbsOrigin.ToVector_t() ?? new();
                 bool isInsideStartBox = Utils.IsVectorInsideBox(playerPos, currentMapStartC1, currentMapStartC2, true);
                 playerTimers[slot].inStartzone = isInsideStartBox; // Only set to true if player is actually in the start zone
