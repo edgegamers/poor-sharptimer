@@ -1,4 +1,4 @@
-﻿name: Build and Publish C# Project
+name: Build and Publish C# Project
 
 on:
   push:
@@ -36,13 +36,13 @@ jobs:
             ${{ runner.os }}-dotnet-
 
       - name: Restore dependencies
-        run: dotnet restore SharpTimer.csproj
+        run: dotnet restore SharpTimer-main.sln
 
       - name: Build the project
-        run: dotnet build --configuration Release SharpTimer.csproj
+        run: dotnet build --configuration Release SharpTimer-main.sln
 
       - name: Publish the project
-        run: dotnet publish --configuration Release --output ./publish SharpTimer.csproj
+        run: dotnet publish --configuration Release --output ./publish src/SharpTimer.csproj
 
       - name: Move files
         run: |
