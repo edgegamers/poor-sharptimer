@@ -16,8 +16,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using System.Runtime.InteropServices;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Memory;
-using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace SharpTimer
@@ -39,16 +37,18 @@ namespace SharpTimer
 
             try
             {
-                if (Plugin.isLinux)
-                {
-                    Utils.LogDebug("Trying to register Linux Damage hook...");
-                    VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Hook(OnTakeDamage, HookMode.Pre);
-                }
-                else
-                {
-                    Utils.LogDebug("Trying to register Windows Damage hook...");
-                    Plugin.RegisterEventHandler<EventPlayerHurt>(OnPlayerHurt, HookMode.Pre);
-                }
+                // if (Plugin.isLinux)
+                // {
+                //     Utils.LogDebug("Trying to register Linux Damage hook...");
+                //     VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Hook(OnTakeDamage, HookMode.Pre);
+                // }
+                // else
+                // {
+                //     Utils.LogDebug("Trying to register Windows Damage hook...");
+                //     Plugin.RegisterEventHandler<EventPlayerHurt>(OnPlayerHurt, HookMode.Pre);
+                // }
+                Utils.LogDebug("Registering Damage hook via EventPlayerHurt...");
+                Plugin.RegisterEventHandler<EventPlayerHurt>(OnPlayerHurt, HookMode.Pre);
             }
             catch (Exception ex)
             {
@@ -65,14 +65,16 @@ namespace SharpTimer
 
             try
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Unhook(OnTakeDamage, HookMode.Pre);
-                }
-                else
-                {
-                    Plugin.DeregisterEventHandler<EventPlayerHurt>(OnPlayerHurt, HookMode.Pre);
-                }
+                // if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                // {
+                //     VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Unhook(OnTakeDamage, HookMode.Pre);
+                // }
+                // else
+                // {
+                //     Plugin.DeregisterEventHandler<EventPlayerHurt>(OnPlayerHurt, HookMode.Pre);
+                // }
+
+                Plugin.DeregisterEventHandler<EventPlayerHurt>(OnPlayerHurt, HookMode.Pre);
             }
             catch (Exception ex)
             {
@@ -83,21 +85,22 @@ namespace SharpTimer
             }
         }
 
-        private HookResult OnTakeDamage(DynamicHook hook)
-        {
-            var ent = hook.GetParam<CEntityInstance>(0);
-            var info = hook.GetParam<CTakeDamageInfo>(1);
 
-            if (Plugin.disableDamage) hook.GetParam<CTakeDamageInfo>(1).Damage = 0;
-
-            if (!ent.IsValid || !info.Attacker.IsValid)
-                return HookResult.Continue;
-
-            if (ent.DesignerName == "player" && info.Attacker.Value!.DesignerName == "player")
-                return HookResult.Handled;
-            else
-                return HookResult.Continue;
-        }
+        // private HookResult OnTakeDamage(DynamicHook hook)
+        // {
+        //     var ent = hook.GetParam<CEntityInstance>(0);
+        //     var info = hook.GetParam<CTakeDamageInfo>(1);
+        //
+        //     if (Plugin.disableDamage) hook.GetParam<CTakeDamageInfo>(1).Damage = 0;
+        //
+        //     if (!ent.IsValid || !info.Attacker.IsValid)
+        //         return HookResult.Continue;
+        //
+        //     if (ent.DesignerName == "player" && info.Attacker.Value!.DesignerName == "player")
+        //         return HookResult.Handled;
+        //
+        //     return HookResult.Continue;
+        // }
 
         private HookResult OnPlayerHurt(EventPlayerHurt @event, GameEventInfo info)
         {
