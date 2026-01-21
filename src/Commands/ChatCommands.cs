@@ -21,6 +21,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Admin;
+using SharpTimer.Mixins;
 
 namespace SharpTimer
 {
@@ -879,6 +880,14 @@ namespace SharpTimer
                     playerTimers[playerSlot].CachedPB = $"{(pbTicks != 0 ? $" {FormatTime(pbTicks)}" : "")}";
                     playerTimers[playerSlot].CachedRank = ranking;
                     playerTimers[playerSlot].CachedMapPlacement = mapPlacement;
+
+                    // If rank changed, refresh scoreboard placement cache and update Actain tag (if available).
+                    cachedPlacements.Remove(playerSlot);
+                    if (Mixin.Actain != null && player != null && player.IsValid)
+                    {
+                        Mixin.Actain.getTagService().SetTag(player, ranking, false);
+                        Mixin.Actain.getTagService().SetTagColor(player, GetRankColorForChat(player)[0], false);
+                    }
 
                     if (displayScoreboardTags) AddScoreboardTagToPlayer(player!, ranking);
                 });
