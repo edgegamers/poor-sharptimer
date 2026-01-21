@@ -19,7 +19,6 @@ using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using System.Runtime.InteropServices;
-using CounterStrikeSharp.API.Modules.Timers;
 
 namespace SharpTimer
 {
@@ -46,8 +45,9 @@ namespace SharpTimer
             gameDir = Server.GameDirectory;
             SharpTimerDebug($"Set gameDir to {gameDir}");
 
-            const string recordsFileName = "SharpTimer/PlayerRecords/";
-            playerRecordsPath = Path.Join(gameDir, "csgo", "cfg", recordsFileName);
+            string recordsFileName = $"SharpTimer/PlayerRecords/";
+            playerRecordsPath = Path.Join(gameDir + "/csgo/cfg", recordsFileName);
+
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) isLinux = true;
             else isLinux = false;
@@ -366,8 +366,6 @@ namespace SharpTimer
             {
                 DamageHook();
             });
-
-            AddTimer(1.0f, AssignPlayerScoreboards, TimerFlags.REPEAT);
 
             AddCommandListener("say", OnPlayerChat);
             AddCommandListener("say_team", OnPlayerChat);

@@ -25,16 +25,7 @@ namespace SharpTimer
     public partial class SharpTimer
     {
         //Because decimals are weird
-        private CultureInfo culture;
-
-        public SharpTimer() {
-            try {
-                culture = CultureInfo.CreateSpecificCulture("en-US");
-            } catch (CultureNotFoundException e) {
-                Console.WriteLine("Culture not found, using invariant culture.");
-                culture = CultureInfo.InvariantCulture;
-            }
-        }
+        CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
         
         [ConsoleCommand("sharptimer_hostname", "Default Server Hostname.")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
@@ -906,21 +897,6 @@ namespace SharpTimer
 
             applyInfiniteAmmo = bool.TryParse(args, out bool value) ? value : args != "0" && applyInfiniteAmmo;
         }
-        
-        [ConsoleCommand("sharptimer_stage_times_path", "Path to the stage times folder. Default value : csgo cfg SharpTimer PlayerStageData")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerStageTimesPathConvar(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString.Trim();
-
-            if (string.IsNullOrEmpty(args))
-            {
-                playerStagesPath = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerStageData");
-                return;
-            }
-
-            playerStagesPath = Path.Join(gameDir, args);
-        }
 
         [ConsoleCommand("sharptimer_use2Dspeed_enabled", "Default value: false")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
@@ -1552,15 +1528,6 @@ namespace SharpTimer
 
             enableNoclip = bool.TryParse(args, out bool enableNoclipValue) ? enableNoclipValue : args != "0" && enableNoclip;
         }
-        
-        [ConsoleCommand("sharptimer_rs_enabled_onlinear", "Whether !rs will reset players on linear maps. Default value : false")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerResetLinearMapsConvar(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString;
-
-            enableRsOnLinear = bool.TryParse(args, out bool enableRsOnLinearValue) ? enableRsOnLinearValue : args != "0" && enableRsOnLinear;
-        }
 
         [ConsoleCommand("sharptimer_styles_enabled", "Enable or disable styles. Default value: true")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
@@ -1835,21 +1802,6 @@ namespace SharpTimer
             }
 
             remoteSurfDataSource = $"{args}";
-        }
-        
-        [ConsoleCommand("sharptimer_replay_data_directory", "Directory for replay data. Prepended with game dir. Default value: csgo/cfg/SharpTimer/PlayerReplayData")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerReplayDataDirectory(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString.Trim();
-            
-            if (string.IsNullOrEmpty(args))
-            {
-                playerReplaysPath = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerReplayData");
-                return;
-            }
-            
-            playerReplaysPath = Path.Join([gameDir, ..args.Split('/')]);
         }
         
         [ConsoleCommand("sharptimer_replays_use_binary", "Save replays as binary files instead of json. Default value: false")]

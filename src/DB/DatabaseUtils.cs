@@ -224,8 +224,6 @@ namespace SharpTimer
                                                     "TimesConnected INT DEFAULT 0",
                                                     "LastConnected INT DEFAULT 0",
                                                     "GlobalPoints INT DEFAULT 0",
-                                                    "HideWeapon BOOL DEFAULT false",
-                                                    "HidePlayers BOOL DEFAULT false",
                                                     "HideTimerHud BOOL DEFAULT false",
                                                     "HideKeys BOOL DEFAULT false",
                                                     "HideJS BOOL DEFAULT false",
@@ -251,7 +249,6 @@ namespace SharpTimer
                                                     @"""TimesConnected"" INT DEFAULT 0",
                                                     @"""LastConnected"" INT DEFAULT 0",
                                                     @"""GlobalPoints"" INT DEFAULT 0",
-                                                    @"""HideWeapon"" BOOL DEFAULT false",
                                                     @"""HideTimerHud"" BOOL DEFAULT false",
                                                     @"""HideKeys"" BOOL DEFAULT false",
                                                     @"""HideJS"" BOOL DEFAULT false",
@@ -277,8 +274,6 @@ namespace SharpTimer
                                                     "TimesConnected INTEGER DEFAULT 0",
                                                     "LastConnected INTEGER DEFAULT 0",
                                                     "GlobalPoints INTEGER DEFAULT 0",
-                                                    "HideWeapon INTEGER DEFAULT 0",
-                                                    "HidePlayers INTEGER DEFAULT 0",
                                                     "HideTimerHud INTEGER DEFAULT 0",
                                                     "HideKeys INTEGER DEFAULT 0",
                                                     "HideJS INTEGER DEFAULT 0",
@@ -538,8 +533,6 @@ namespace SharpTimer
                                             TimesConnected INT,
                                             LastConnected INT,
                                             GlobalPoints INT,
-                                            HideWeapon BOOL,
-                                            HidePlayers BOOL,
                                             HideTimerHud BOOL,
                                             HideKeys BOOL,
                                             HideJS BOOL,
@@ -558,8 +551,6 @@ namespace SharpTimer
                                             ""TimesConnected"" INT,
                                             ""LastConnected"" INT,
                                             ""GlobalPoints"" INT,
-                                            ""HideWeapon"" BOOL,
-                                            ""HidePlayers"" BOOL,
                                             ""HideTimerHud"" BOOL,
                                             ""HideKeys"" BOOL,
                                             ""HideJS"" BOOL,
@@ -578,8 +569,6 @@ namespace SharpTimer
                                             TimesConnected INTEGER,
                                             LastConnected INTEGER,
                                             GlobalPoints INTEGER,
-                                            HideWeapon INTEGER,
-                                            HidePlayers INTEGER,
                                             HideTimerHud INTEGER,
                                             HideKeys INTEGER,
                                             HideJS INTEGER,
@@ -2611,13 +2600,18 @@ namespace SharpTimer
             return 0;
         }
 
-        public async Task<int> GetPlayerPointsFromDatabase(string steamId, string? playerName = null)
+        public async Task<int> GetPlayerPointsFromDatabase(CCSPlayerController? player, string steamId, string playerName)
         {
             SharpTimerDebug("Trying GetPlayerPointsFromDatabase");
             int playerPoints = 0;
 
             try
             {
+                if (!IsAllowedClient(player))
+                {
+                    return playerPoints;
+                }
+
                 using (var connection = await OpenConnectionAsync())
                 {
                     await CreatePlayerStatsTableAsync(connection);
