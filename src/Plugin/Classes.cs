@@ -263,7 +263,6 @@ namespace SharpTimer
         public int BonusX { get; set; }
         public int Style { get; set; }
         public List<ReplayFrames> replayFrames { get; set; } = [];
-        [Serializable]
         public class ReplayFrames
         {
             public ReplayVector? Position { get; set; }
@@ -275,7 +274,6 @@ namespace SharpTimer
         }
     }
 
-    [Serializable]
     public class IndexedReplayFrames
     {
         public int Index { get; set; }

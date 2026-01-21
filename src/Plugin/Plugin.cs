@@ -1,4 +1,4 @@
-using CounterStrikeSharp.API;
+﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Modules.Timers;
 using FixVectorLeak;
 using System.Text;
@@ -47,7 +47,6 @@ public partial class SharpTimer
                 stageTriggers.Clear();
                 stageTriggerAngs.Clear();
                 stageTriggerPoses.Clear();
-                cachedPlacements.Clear();
 
                 Utils.KillServerCommandEnts();
                 globalDisabled = false;

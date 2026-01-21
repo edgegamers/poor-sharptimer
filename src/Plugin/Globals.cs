@@ -139,7 +139,6 @@ namespace SharpTimer
         public bool enableStageSR = true;
         public bool ignoreJSON = false;
         public bool enableReplays = false;
-        public bool useBinaryReplays = false;
         public bool onlySRReplay = false;
         public bool enableSRreplayBot = false;
         public CCSPlayerController? replayBotController;
@@ -182,6 +181,7 @@ namespace SharpTimer
         public double group3 = 12.5;
         public double group4 = 25;
         public double group5 = 50;
+
 
         public bool globalChecksPassed = false;
         public bool globalDisabled = false;
@@ -291,11 +291,9 @@ namespace SharpTimer
         public string? postgresPath;
         public string? PlayerStatsTable = "PlayerStats";
         public string? playerRecordsPath;
-        public string? playerStagesPath;
         public string? currentMapName;
         public string? currentAddonID;
         public string? defaultServerHostname = ConVar.Find("hostname")?.StringValue;
-        public string? playerReplaysPath;
 
         public bool discordWebhookEnabled = false;
         public string discordWebhookBotName = "SharpTimer";
@@ -320,8 +318,6 @@ namespace SharpTimer
         public bool discordWebhookSteamLink = true;
         public bool discordWebhookDisableStyleRecords = false;
 
-        public string timerSize = "fontSize-l", velocitySize = "fontSize-ml", labelSize = "fontSize-s", syncSize = "fontSize-ml";
-        
         public string? remoteBhopDataSource = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/bhop_.json";
         public string? remoteSurfDataSource = "https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/surf_.json";
         public bool disableRemoteData = false;
