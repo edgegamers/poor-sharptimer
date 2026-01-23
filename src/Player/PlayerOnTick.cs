@@ -114,7 +114,7 @@ namespace SharpTimer
                         // remove jumping in startzone
                         if (!startzoneJumping && playerTimer.inStartzone)
                         {
-                            if((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.OldJumpPressed)
+                            if((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.LegacyJump.OldJumpPressed)
                                 playerPawn.AbsVelocity.Z = 0f;
                         }
 
@@ -311,7 +311,7 @@ namespace SharpTimer
                             player.PrintToCenterHtml(hudContent);
                         
                         // idk what this is for
-                        playerTimer.MovementService!.OldJumpPressed = false;
+                        playerTimer.MovementService!.LegacyJump.OldJumpPressed = false;
                     }
                 }
             }
@@ -396,7 +396,7 @@ namespace SharpTimer
                                     $"{((playerButtons & PlayerButtons.Forward) != 0 ? "W" : "_")} " +
                                     $"{((playerButtons & PlayerButtons.Moveright) != 0 ? "D" : "_")} " +
                                     $"{((playerButtons & PlayerButtons.Back) != 0 ? "S" : "_")} " +
-                                    $"{((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.OldJumpPressed ? "J" : "_")} " +
+                                    $"{((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.LegacyJump.OldJumpPressed ? "J" : "_")} " +
                                     $"{((playerButtons & PlayerButtons.Duck) != 0 ? "C" : "_")}";
 
 
