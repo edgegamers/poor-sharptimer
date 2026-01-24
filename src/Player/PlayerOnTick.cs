@@ -93,7 +93,7 @@ namespace SharpTimer
 
                         if (!startzoneJumping && playerTimers[player.Slot].inStartzone)
                         {
-                            if((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.OldJumpPressed)
+                            if((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.LegacyJump.OldJumpPressed)
                             {
                                 player!.Pawn.Value!.AbsVelocity.Z = 0f;
                             }
@@ -327,7 +327,7 @@ namespace SharpTimer
                                                 $"{((playerButtons & PlayerButtons.Forward) != 0 ? "W" : "_")} " +
                                                 $"{((playerButtons & PlayerButtons.Moveright) != 0 ? "D" : "_")} " +
                                                 $"{((playerButtons & PlayerButtons.Back) != 0 ? "S" : "_")} " +
-                                                $"{((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.OldJumpPressed ? "J" : "_")} " +
+                                                $"{((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.LegacyJump.OldJumpPressed ? "J" : "_")} " +
                                                 $"{((playerButtons & PlayerButtons.Duck) != 0 ? "C" : "_")}";
 
 
@@ -345,7 +345,7 @@ namespace SharpTimer
                             player.PrintToCenterHtml(hudContent);
                         }
                         
-                        playerTimer.MovementService!.OldJumpPressed = false;
+                        playerTimer.MovementService!.LegacyJump.OldJumpPressed = false;
                     }
                 }
             }
@@ -443,10 +443,10 @@ namespace SharpTimer
                                             $"{((playerButtons & PlayerButtons.Forward) != 0 ? "W" : "_")} " +
                                             $"{((playerButtons & PlayerButtons.Moveright) != 0 ? "D" : "_")} " +
                                             $"{((playerButtons & PlayerButtons.Back) != 0 ? "S" : "_")} " +
-                                            $"{((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.OldJumpPressed ? "J" : "_")} " +
+                                            $"{((playerButtons & PlayerButtons.Jump) != 0 || playerTimer.MovementService!.LegacyJump.OldJumpPressed ? "J" : "_")} " +
                                             $"{((playerButtons & PlayerButtons.Duck) != 0 ? "C" : "_")}";
 
-                    if (playerTimer.MovementService!.OldJumpPressed == true) playerTimer.MovementService.OldJumpPressed = false;
+                    if (playerTimer.MovementService!.LegacyJump.OldJumpPressed == true) playerTimer.MovementService.LegacyJump.OldJumpPressed = false;
 
                     string hudContent = (hudEnabled ? timerLine +
                                         (VelocityHudEnabled ? veloLine : "") +
