@@ -103,13 +103,13 @@ public partial class SharpTimer
                 long addonID = GetAddonID();
                 validPlugins = CheckPlugins();
                 validCvars = CheckCvars();
-
+                if (!validPlugins || !validCvars)
+                    globalDisabled = true;
+                
                 Server.NextFrame(async () =>
                 {
                     validKey = await CheckKeyAsync();
                     validHash = await CheckHashAsync();
-                    if (!validKey || !validHash || !validPlugins || !validCvars)
-                        globalDisabled = true;
 
                     int mapId = await GetMapIDAsync(addonID);
                     await CacheMapData(mapId, addonID, mapName);
