@@ -16,6 +16,7 @@
 			<ExcludeAssets>runtime</ExcludeAssets>
 			<IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+        <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
         <PackageReference Include="Nexd.MySQL" Version="1.0.2" />
         <PackageReference Include="Npgsql" Version="8.0.3" />
         <PackageReference Include="Microsoft.Data.SQLite" Version="8.0.8" />
