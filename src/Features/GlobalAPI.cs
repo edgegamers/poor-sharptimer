@@ -1,11 +1,10 @@
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Utils;
+using HtmlAgilityPack;
 
 namespace SharpTimer
 {
@@ -16,9 +15,21 @@ namespace SharpTimer
         PlayerCache playerCache = new PlayerCache();
         ServerCache serverCache = new ServerCache();
         MapCache mapCache = new MapCache();
-        
-        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate IntPtr GetAddonNameDelegate(IntPtr thisPtr);
+        public string WorkShop_iD = "";
+        public string WorkShop_URL = "";
+        private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler())
+        {
+            DefaultRequestHeaders =
+            {
+                { "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }
+            }
+        };
+        private static readonly HashSet<string> _defaultMaps = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "ar_baggage","ar_pool_day","ar_shoots","de_anubis","de_ancient","de_dust2","de_inferno",
+            "de_mirage","de_nuke","de_overpass","de_vertigo","de_basalt","de_palais","de_train",
+            "de_whistle","cs_italy","cs_office",
+        };
         
         private string apiUrl = "https://stglobalapi.azurewebsites.net/api";
 
@@ -280,19 +291,76 @@ namespace SharpTimer
             }
         }
 
-        public long GetAddonID()
+        public async Task<long> GetAddonID(string mapname)
         {
-            // https://github.com/alliedmodders/hl2sdk/blob/f3b44f206d38d1b71164e558cd4087d84607d50c/public/iserver.h#L84-L85
-            // GetAddonName
-            IntPtr networkGameServer = networkServerService.GetIGameServer().Handle;
-            IntPtr vtablePtr = Marshal.ReadIntPtr(networkGameServer);
-            IntPtr functionPtr = Marshal.ReadIntPtr(vtablePtr + (25 * IntPtr.Size));
-            var getAddonName = Marshal.GetDelegateForFunctionPointer<GetAddonNameDelegate>(functionPtr);
-            IntPtr result = getAddonName(networkGameServer);
-            //probably valve map
-            if (Marshal.PtrToStringAnsi(result)! == String.Empty)
+            //method yoinked from snippet by GoldKingZ
+            WorkShop_URL = "";
+            WorkShop_iD = "";
+
+            if (string.IsNullOrWhiteSpace(mapname))
                 return 0;
-            return long.Parse(Marshal.PtrToStringAnsi(result)!.Split(',')[0]); // return the first id in csv
+
+            string[] mapParts = mapname.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (mapParts.Length >= 2 &&
+                mapParts[0].Equals("workshop", StringComparison.OrdinalIgnoreCase) &&
+                long.TryParse(mapParts[1], out long workshopPathId))
+            {
+                WorkShop_iD = workshopPathId.ToString();
+                WorkShop_URL = $"https://steamcommunity.com/sharedfiles/filedetails/?id={WorkShop_iD}";
+                return workshopPathId;
+            }
+
+            string mapNameForLookup = mapParts.LastOrDefault() ?? mapname;
+            if (_defaultMaps.Contains(mapNameForLookup))
+                return 0;
+
+            string? workshopId = await GetWorkshopIdAsync(mapNameForLookup);
+            if (!string.IsNullOrEmpty(workshopId) && long.TryParse(workshopId, out long addonId))
+            {
+                WorkShop_iD = workshopId;
+                WorkShop_URL = $"https://steamcommunity.com/sharedfiles/filedetails/?id={workshopId}";
+                return addonId;
+            }
+
+            return 0;
+        }
+
+        public async Task<string?> GetWorkshopIdAsync(string mapName)
+        {
+            try
+            {
+                string encodedMapName = Uri.EscapeDataString(mapName);
+                string searchUrl = $"https://steamcommunity.com/workshop/browse/?appid=730&searchtext={encodedMapName}&childpublishedfileid=0&browsesort=textsearch";
+                
+                HttpResponseMessage response = await _httpClient.GetAsync(searchUrl);
+                response.EnsureSuccessStatusCode();
+                
+                string html = await response.Content.ReadAsStringAsync();
+                var htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(html);
+
+                var workshopLinks = htmlDoc.DocumentNode.SelectNodes(
+                    "//a[contains(@href, '/sharedfiles/filedetails/?id=')]"
+                );
+
+                if (workshopLinks?.Count > 0)
+                {
+                    foreach (var link in workshopLinks)
+                    {
+                        string href = link.GetAttributeValue("href", "");
+                        if (href.Contains("filedetails"))
+                        {
+                            string id = href.Split('=')[1].Split('&')[0];
+                            return id;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError($"GetWorkshopIdAsync failed: {ex.Message}");
+            }
+            return null;
         }
 
         public async Task<bool> CheckAddonAsync(long addonId)

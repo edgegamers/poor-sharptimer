@@ -100,7 +100,6 @@ public partial class SharpTimer
 
                 string ip = Utils.GetIPAndPort().Item1;
                 int port = Utils.GetIPAndPort().Item2;
-                long addonID = GetAddonID();
                 validPlugins = CheckPlugins();
                 validCvars = CheckCvars();
                 if (!validPlugins || !validCvars)
@@ -110,6 +109,7 @@ public partial class SharpTimer
                 {
                     validKey = await CheckKeyAsync();
                     validHash = await CheckHashAsync();
+                    long addonID = await GetAddonID(mapName);
 
                     int mapId = await GetMapIDAsync(addonID);
                     await CacheMapData(mapId, addonID, mapName);
