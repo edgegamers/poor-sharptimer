@@ -105,13 +105,18 @@ public partial class SharpTimer
                 validCvars = CheckCvars();
                 if (!validPlugins || !validCvars)
                     globalDisabled = true;
-                
+
+                // Global API is intentionally disabled, apiKey is forced blank. Preserved for posterity.
+                if (apiKey == "")
+                    globalDisabled = true;
+
                 Server.NextFrame(() =>
                 {
                     _ = Task.Run(async () =>
                     {
                         try
                         {
+                            if (globalDisabled) return;
                             validKey = await CheckKeyAsync();
                             validHash = await CheckHashAsync();
                             long addonID = await GetAddonID(mapName);

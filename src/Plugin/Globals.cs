@@ -153,7 +153,8 @@ namespace SharpTimer
         public CCSPlayerController? replayBotController;
         public string replayBotName = "";
         public int maxReplayFrames = 19200;
-        public string apiKey = "";
+        // Global API is intentionally disabled, apiKey is forced blank. Preserved for posterity.
+        public readonly string apiKey = "";
 
         public static float customAirAccel = 150f;
         public static float customAccel = 10f;

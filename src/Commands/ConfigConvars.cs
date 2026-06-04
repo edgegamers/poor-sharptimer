@@ -682,8 +682,9 @@ namespace SharpTimer
             }
 
             vipGifHost = $"{args}";
-        }*/
+        }
 
+        // Global API is intentionally disabled, apiKey is forced blank. Preserved for posterity.
         [ConsoleCommand("sharptimer_global_cache_interval", "Refresh interval of record and point caching. Default value: 120")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
         public void SharpTimerGlobalCacheConvar(CCSPlayerController? player, CommandInfo command)
@@ -700,6 +701,7 @@ namespace SharpTimer
                 Utils.LogError("Invalid global cache refresh interval value. Please provide a positive value.");
             }
         }
+        */
         
         [ConsoleCommand("sharptimer_record_cache_interval", "Total timespan in which records will be cached. Default value : 60")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
@@ -877,6 +879,7 @@ namespace SharpTimer
             disableRemoteData = bool.TryParse(args, out bool value) ? value : args != "0" && disableRemoteData;
         }
 
+        /*
         [ConsoleCommand("sharptimer_global_api_key", "Global api key")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
         public void SharpTimerAPIKeyConvar(CCSPlayerController? player, CommandInfo command)
@@ -891,7 +894,7 @@ namespace SharpTimer
 
             apiKey = $"{args}";
         }
-        
+        */
         [ConsoleCommand("sharptimer_default_mode", "Set default mode for all players on connect")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
         public void SharpTimerDefaultModeConvar(CCSPlayerController? player, CommandInfo command)
