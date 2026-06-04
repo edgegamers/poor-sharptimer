@@ -31,6 +31,78 @@ namespace SharpTimer;
 
 public partial class SharpTimer : BasePlugin
 {
+    private void EnsureConfigFilesExist()
+    {
+        string cfgDir = Path.Join(gameDir, "csgo", "cfg", "SharpTimer");
+        string[] configFiles =
+        {
+            "admessages.txt",
+            "config.cfg",
+            "custom_exec.cfg",
+            "discordConfig.json",
+            "mysqlConfig.json",
+            "postgresConfig.json",
+            "ranks.json"
+        };
+
+        foreach (string fileName in configFiles)
+        {
+            try
+            {
+                string realPath = Path.Join(cfgDir, fileName);
+                if (File.Exists(realPath)) continue;
+
+                string examplePath = Path.Join(cfgDir, $"example.{fileName}");
+                if (!File.Exists(examplePath))
+                {
+                    Utils.LogError($"Missing config template: example.{fileName}");
+                    continue;
+                }
+
+                File.Copy(examplePath, realPath);
+                Utils.LogDebug($"Created {fileName} from example.{fileName}");
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError($"Failed to create {fileName} from template: {ex.Message}");
+            }
+        }
+
+        string mapDataDir = Path.Join(cfgDir, "MapData");
+        EnsureExampleConfigsInDir(Path.Join(mapDataDir, "local_data"));
+        EnsureExampleConfigsInDir(Path.Join(mapDataDir, "MapExecs"));
+    }
+
+    // Copies every "example.<name>" in dir to "<name>" when the real file is missing.
+    private void EnsureExampleConfigsInDir(string dir)
+    {
+        try
+        {
+            if (!Directory.Exists(dir)) return;
+
+            foreach (string examplePath in Directory.GetFiles(dir, "example.*"))
+            {
+                try
+                {
+                    string realName = Path.GetFileName(examplePath).Substring("example.".Length);
+                    string realPath = Path.Join(dir, realName);
+                    if (File.Exists(realPath)) continue;
+
+                    File.Copy(examplePath, realPath);
+                    Utils.LogDebug($"Created {realName} from example.{realName}");
+                }
+                catch (Exception ex)
+                {
+                    Utils.LogError($"Failed to create file from {Path.GetFileName(examplePath)}: {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Utils.LogError($"Failed to process example configs in {dir}: {ex.Message}");
+        }
+    }
+
     public override void Load(bool hotReload)
     {
         Instance = this;
@@ -44,10 +116,12 @@ public partial class SharpTimer : BasePlugin
         // Utils.CheckForUpdate(); // Not currently needed
 
         defaultServerHostname = ConVar.Find("hostname")!.StringValue;
-        Server.ExecuteCommand($"execifexists SharpTimer/config.cfg");
 
         gameDir = Server.GameDirectory;
         Utils.LogDebug($"Set gameDir to {gameDir}");
+
+        EnsureConfigFilesExist();
+        Server.ExecuteCommand($"execifexists SharpTimer/config.cfg");
 
         CheckMissingFakeConvars();
 
