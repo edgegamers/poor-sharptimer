@@ -723,7 +723,19 @@ namespace SharpTimer
                 currentMapNamee = mapName;
 
             var sortedRecords = await GetSortedRecordsFromDatabase(10, bonusX, currentMapNamee, style, mode);
-            
+
+            // Grab replay flags now so the render below doesn't block on .Result
+            var replayAvailability = new Dictionary<string, bool>();
+            if (enableReplays)
+            {
+                foreach (var kvp in sortedRecords.Take(10))
+                {
+                    var recSteamID = kvp.Value.SteamID!;
+                    if (!replayAvailability.ContainsKey(recSteamID))
+                        replayAvailability[recSteamID] = await CheckSRReplay(recSteamID, bonusX, 0, mode);
+                }
+            }
+
             Server.NextFrame(() =>
             {
                 if (!IsPlayerOrSpectator(player))
@@ -752,9 +764,9 @@ namespace SharpTimer
                     string _playerName = kvp.Value.PlayerName!;
                     int timerTicks = kvp.Value.TimerTicks;
 
-                    bool showReplays = false;
-                    if (enableReplays == true)
-                        showReplays = Task.Run(() => CheckSRReplay(kvp.Value.SteamID!, bonusX, 0, mode)).Result;
+                    bool showReplays = enableReplays
+                        && replayAvailability.TryGetValue(kvp.Value.SteamID!, out var hasReplay)
+                        && hasReplay;
 
                     string replayIndicator = enableReplays ? (showReplays ? $"{ChatColors.Red}◉" : "") : "";
 
