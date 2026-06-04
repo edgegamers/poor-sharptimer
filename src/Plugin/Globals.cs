@@ -35,7 +35,6 @@ namespace SharpTimer
         public static SharpTimer Instance = new();
 
         public Utils Utils = null!;
-        public RemoveDamage RemoveDamage = null!;
 
         public static PluginCapability<ISharpTimerEventSender> StEventSenderCapability { get; } = new("sharptimer:event_sender");
         public static PluginCapability<ISharpTimerManager> StManagerCapability { get; } = new("sharptimer:manager");

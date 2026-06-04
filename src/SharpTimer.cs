@@ -36,7 +36,6 @@ public partial class SharpTimer : BasePlugin
         Instance = this;
 
         Utils = new Utils(this);
-        RemoveDamage = new RemoveDamage(this);
 
         Capabilities.RegisterPluginCapability(StEventSenderCapability, () => new SharpTimerAPI_EventSender());
         Capabilities.RegisterPluginCapability(StManagerCapability, () => new SharpTimerAPI_Manager());
@@ -82,7 +81,8 @@ public partial class SharpTimer : BasePlugin
             Utils.LogError($"StateTransition hook failed. Signature is likely outdated. Check for the latest stgamedata.json file on GitHub. State tracking features disabled until updated.");
         }
         
-        RemoveDamage?.Hook();
+        if (disableDamage)
+            RegisterListener<Listeners.OnPlayerTakeDamagePre>(OnPlayerTakeDamagePre);
 
         RegisterListener<Listeners.OnMapStart>(OnMapStartHandler);
         RegisterListener<Listeners.OnTick>(PlayerOnTick);
@@ -115,7 +115,8 @@ public partial class SharpTimer : BasePlugin
             RunCommand?.Unhook(OnRunCommandPre, HookMode.Pre);
 
         StateTransition.Unhook(Hook_StateTransition, HookMode.Post);
-        RemoveDamage?.Unhook();
+        if (disableDamage)
+            RemoveListener<Listeners.OnPlayerTakeDamagePre>(OnPlayerTakeDamagePre);
 
         RemoveListener<Listeners.OnMapStart>(OnMapStartHandler);
         RemoveListener<Listeners.OnTick>(PlayerOnTick);
