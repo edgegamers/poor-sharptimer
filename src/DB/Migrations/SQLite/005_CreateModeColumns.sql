@@ -1,3 +1,5 @@
+BEGIN TRANSACTION;
+
 CREATE TABLE PlayerRecords_new (
     MapName TEXT,
     SteamID TEXT,
@@ -21,3 +23,5 @@ DROP TABLE PlayerRecords;
 ALTER TABLE PlayerRecords_new RENAME TO PlayerRecords;
 
 ALTER TABLE PlayerStats ADD COLUMN Mode TEXT DEFAULT 'None';
+
+COMMIT;

@@ -1617,8 +1617,8 @@ namespace SharpTimer
                                 break;
                             case DatabaseType.SQLite:
                                 upsertQuery = @"
-                                                    INSERT INTO PlayerStageTimes 
-                                                    (MapName, SteamID, PlayerName, TimerTicks, Stage, FormattedTime, Velocity, Style, Mode)
+                                                    INSERT INTO PlayerStageTimes
+                                                    (MapName, SteamID, PlayerName, Stage, TimerTicks, FormattedTime, Velocity, Style, Mode)
                                                     VALUES 
                                                     (@MapName, @SteamID, @PlayerName, @Stage, @TimerTicks, @FormattedTime, @Velocity, @Style, @Mode)
                                                     ON CONFLICT (MapName, SteamID, Stage, Style, Mode)

@@ -1,3 +1,5 @@
+BEGIN TRANSACTION;
+
 CREATE TABLE PlayerStageTimes_new
 (
     MapName       TEXT,
@@ -7,8 +9,8 @@ CREATE TABLE PlayerStageTimes_new
     TimerTicks    INT,
     FormattedTime TEXT,
     Velocity      TEXT,
-    Style         INT,
-    Mode          TEXT,
+    Style         INT  DEFAULT 0,
+    Mode          TEXT DEFAULT 'None',
     PRIMARY KEY (MapName, SteamID, Stage, Style, Mode)
 );
 
@@ -26,3 +28,5 @@ FROM PlayerStageTimes;
 
 DROP TABLE PlayerStageTimes;
 ALTER TABLE PlayerStageTimes_new RENAME TO PlayerStageTimes;
+
+COMMIT;
