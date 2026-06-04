@@ -74,6 +74,8 @@ SharpTimer is a CS2 Timer plugin for Surf/Bhop/MG/Deathrun using CounterStrikeSh
 
 [**CounterStrikeSharp** *(v369 and up)*](https://github.com/roflmuffin/CounterStrikeSharp/releases)
 
+[**cs2-tags** *(required)*](https://github.com/CounterStrike2-Plugins-Archive/cs2-tags)
+
 [**MovementUnlocker** *(optional but recommended for surf and bhop servers)*](https://github.com/Source2ZE/MovementUnlocker)
 
 [**RampBugFix** *(optional but recommended for surf servers)*](https://github.com/Interesting-exe/CS2Fixes-RampbugFix/)
