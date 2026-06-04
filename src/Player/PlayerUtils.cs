@@ -15,10 +15,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
-using Microsoft.Extensions.Localization;
+using FixVectorLeak;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.Json;
+using SharpTimerAPI.Events;
+using TagsApi;
+using CounterStrikeSharp.API.Modules.Memory;
 
 namespace SharpTimer
 {
@@ -26,43 +32,55 @@ namespace SharpTimer
     {
         public void PrintAllEnabledCommands(CCSPlayerController player)
         {
-            SharpTimerDebug($"Printing Commands for {player.PlayerName}");
-            player.PrintToChat($" {Localizer["prefix"]} Available Commands:");
+            Utils.LogDebug($"Printing Commands for {player.PlayerName}");
+            Utils.PrintToChat(player, $"{Localizer["Check_console"]}");
 
-            if (respawnEnabled) player.PrintToChat($" {Localizer["prefix"]} !r (css_r) - Respawns you");
-            if (respawnEnabled && bonusRespawnPoses.Count != 0) player.PrintToChat($" {Localizer["prefix"]} !rb <#> / !b <#> (css_rb / css_b) - Respawns you to a bonus");
-            if (respawnEnabled && bonusRespawnPoses.Count != 0) player.PrintToChat($" {Localizer["prefix"]} !setresp / !startpos (css_setresp / css_startpos) - Save a custom respawn point within the start trigger");
-            if (topEnabled) player.PrintToChat($" {Localizer["prefix"]} !top (css_top) - Lists top 10 records on this map");
-            if (topEnabled && bonusRespawnPoses.Count != 0) player.PrintToChat($" {Localizer["prefix"]} !topbonus <#> (css_topbonus) - Lists top 10 records of a bonus");
-            if (rankEnabled) player.PrintToChat($" {Localizer["prefix"]} !rank (css_rank) - Shows your current rank and pb");
-            if (globalRanksEnabled) player.PrintToChat($" {Localizer["prefix"]} !points (css_points) - Prints top 10 points");
-            if (goToEnabled) player.PrintToChat($" {Localizer["prefix"]} !goto <name> (css_goto) - Teleports you to a player");
-            if (stageTriggerPoses.Count != 0) player.PrintToChat($" {Localizer["prefix"]} !stage <#> (css_stage) - Teleports you to a stage");
-            player.PrintToChat($" {Localizer["prefix"]} !sounds (css_sounds) - Toggle timer sounds!");
-            player.PrintToChat($" {Localizer["prefix"]} !hud (css_hud) - Toggle timer hud!");
-            player.PrintToChat($" {Localizer["prefix"]} !keys (css_keys) - Toggle hud keys!");
-            player.PrintToChat($" {Localizer["prefix"]} !fov <0-140> (css_fov) - Change your field of view!");
+            if (respawnEnabled) player.PrintToConsole($"{Localizer["console_r"]}");
+            if (respawnEnabled && bonusRespawnPoses.Count != 0) player.PrintToConsole($"{Localizer["console_rb"]}");
+            if (respawnEnabled && bonusRespawnPoses.Count != 0) player.PrintToConsole($"{Localizer["console_setresp"]}");
+            if (topEnabled) player.PrintToConsole($"{Localizer["console_top"]}");
+            if (topEnabled && bonusRespawnPoses.Count != 0) player.PrintToConsole($"{Localizer["console_topbonus"]}");
+            if (rankEnabled) player.PrintToConsole($"{Localizer["console_rank"]}");
+            if (rankEnabled) player.PrintToConsole($"{Localizer["console_ranks"]}");
+            if (globalRanksEnabled) player.PrintToConsole($"{Localizer["console_points"]}");
+            if (goToEnabled) player.PrintToConsole($"{Localizer["console_goto"]}");
+            if (stageTriggerPoses.Count != 0) player.PrintToConsole($"{Localizer["console_stage"]}");
+            player.PrintToConsole($"{Localizer["console_sounds"]}");
+            player.PrintToConsole($"{Localizer["console_hud"]}");
+            player.PrintToConsole($"{Localizer["console_keys"]}");
+            player.PrintToConsole($"{Localizer["console_fov"]}");
 
             if (cpEnabled)
             {
-                PrintToChat(player, currentMapName!.Contains("surf_") ? "!saveloc (css_saveloc) - Saves a Loc" : "!cp (css_cp) - Sets a Checkpoint");
-                PrintToChat(player, currentMapName!.Contains("surf_") ? "!loadloc (css_loadloc) - Teleports you to the last Loc" : "!tp (css_tp) - Teleports you to the last Checkpoint");
-                PrintToChat(player, currentMapName!.Contains("surf_") ? "!prevloc (css_prevloc) - Teleports you one Loc back" : "!prevcp (css_prevcp) - Teleports you one Checkpoint back");
-                PrintToChat(player, currentMapName!.Contains("surf_") ? "!nextloc (css_nextloc) - Teleports you one Loc forward" : "!nextcp (css_nextcp) - Teleports you one Checkpoint forward");
+                if (currentMapName!.Contains("surf_"))
+                {
+                    player.PrintToConsole($"{Localizer["console_saveloc"]}");
+                    player.PrintToConsole($"{Localizer["console_loadloc"]}");
+                    player.PrintToConsole($"{Localizer["console_prevloc"]}");
+                    player.PrintToConsole($"{Localizer["console_nextloc"]}");
+                }
+                else
+                {
+                    player.PrintToConsole($"{Localizer["console_cp"]}");
+                    player.PrintToConsole($"{Localizer["console_tp"]}");
+                    player.PrintToConsole($"{Localizer["console_prevcp"]}");
+                    player.PrintToConsole($"{Localizer["console_nextcp"]}");
+                }
             }
 
             if (enableReplays)
             {
-                player.PrintToChat($" {Localizer["prefix"]} !replay / !replaysr (css_replay / css_replaysr) - Replay the current map server record");
-                player.PrintToChat($" {Localizer["prefix"]} !replaytop [1-10] (css_replaytop) - Replay a top 10 server map record ");
-                player.PrintToChat($" {Localizer["prefix"]} !replaypb (css_replaypb) - Replay your pb for the current map");
-                player.PrintToChat($" {Localizer["prefix"]} !replaybonus / !replayb [1-10] [bonus stage] (css_replaybonus) - Replay a top 10 server bonus record");
-                player.PrintToChat($" {Localizer["prefix"]} !replaybonuspb / !replaybpb (css_replaybonuspb) - Replay your pb for a bonus");
+                player.PrintToConsole($"{Localizer["console_replay"]}");
+                player.PrintToConsole($"{Localizer["console_replaytop"]}");
+                player.PrintToConsole($"{Localizer["console_replaypb"]}");
+                player.PrintToConsole($"{Localizer["console_replaybonus"]}");
+                player.PrintToConsole($"{Localizer["console_replaybonuspb"]}");
             }
 
-            if (jumpStatsEnabled) player.PrintToChat($" {Localizer["prefix"]} !jumpstats (css_jumpstats) - Toggles JumpStats");
-            player.PrintToChat($" {Localizer["prefix"]} !hideweapon (css_hideweapon) - Toggles weapon visibility");
-            if(enableStyles) player.PrintToChat($" {Localizer["prefix"]} !styles (css_styles) - List all styles");
+            player.PrintToConsole($"{Localizer["console_hideweapon"]}");
+            player.PrintToConsole($"{Localizer["console_spec"]}");
+
+            if (enableStyles) player.PrintToConsole($"{Localizer["console_styles"]}");
         }
 
         public void ForcePlayerSpeed(CCSPlayerController player, string activeWeapon)
@@ -80,11 +98,11 @@ namespace SharpTimer
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in ForcePlayerSpeed: {ex.Message}");
+                Utils.LogError($"Error in ForcePlayerSpeed: {ex.Message}");
             }
         }
 
-        private void AdjustPlayerVelocity(CCSPlayerController? player, float velocity, bool forceNoDebug = false)
+        public void AdjustPlayerVelocity(CCSPlayerController? player, float velocity, bool forceNoDebug = false)
         {
             if (!IsAllowedPlayer(player)) return;
 
@@ -113,16 +131,16 @@ namespace SharpTimer
                     player!.PlayerPawn.Value!.AbsVelocity.Y = (float)adjustedY;
                     player!.PlayerPawn.Value!.AbsVelocity.Z = (float)adjustedZ;
 
-                    if (!forceNoDebug) SharpTimerDebug($"Adjusted Velo for {player.PlayerName} to {player.PlayerPawn.Value.AbsVelocity}");
+                    if (!forceNoDebug) Utils.LogDebug($"Adjusted Velo for {player.PlayerName} to {player.PlayerPawn.Value.AbsVelocity.Length().ToString(CultureInfo.InvariantCulture)}");
                 }
                 else
                 {
-                    if (!forceNoDebug) SharpTimerDebug($"Cannot adjust velocity for {player.PlayerName} because current speed is zero.");
+                    if (!forceNoDebug) Utils.LogDebug($"Cannot adjust velocity for {player.PlayerName} because current speed is zero.");
                 }
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in AdjustPlayerVelocity: {ex.Message}");
+                Utils.LogError($"Error in AdjustPlayerVelocity: {ex.Message}");
             }
         }
 
@@ -151,99 +169,80 @@ namespace SharpTimer
                     player.PlayerPawn.Value.AbsVelocity.X = (float)adjustedX;
                     player.PlayerPawn.Value.AbsVelocity.Y = (float)adjustedY;
 
-                    if (!forceNoDebug) SharpTimerDebug($"Adjusted Velo for {player.PlayerName} to {player.PlayerPawn.Value.AbsVelocity}");
+                    if (!forceNoDebug) Utils.LogDebug($"Adjusted Velo for {player.PlayerName} to {player.PlayerPawn.Value.AbsVelocity.Length2D().ToString(CultureInfo.InvariantCulture)}");
                 }
                 else
                 {
-                    if (!forceNoDebug) SharpTimerDebug($"Cannot adjust velocity for {player.PlayerName} because current speed is zero.");
+                    if (!forceNoDebug) Utils.LogDebug($"Cannot adjust velocity for {player.PlayerName} because current speed is zero.");
                 }
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in AdjustPlayerVelocity2D: {ex.Message}");
+                Utils.LogError($"Error in AdjustPlayerVelocity2D: {ex.Message}");
             }
         }
 
+        private string GetCurrentPlayerSpeed(CCSPlayerController player)
+        {
+            var playerPawn = player.PlayerPawn();
+            if (playerPawn == null)
+                return "";
+
+            return Math.Round(
+                use2DSpeed
+                ? Math.Sqrt(playerPawn.AbsVelocity.X * playerPawn.AbsVelocity.X +
+                            playerPawn.AbsVelocity.Y * playerPawn.AbsVelocity.Y)
+                : Math.Sqrt(playerPawn.AbsVelocity.X * playerPawn.AbsVelocity.X +
+                            playerPawn.AbsVelocity.Y * playerPawn.AbsVelocity.Y +
+                            playerPawn.AbsVelocity.Z * playerPawn.AbsVelocity.Z)
+                ).ToString("0000");
+        }
+
+        public void PrintStartSpeed(CCSPlayerController player)
+        {
+            int startSpeed = int.Parse(GetCurrentPlayerSpeed(player));
+            int printSpeed = (maxStartingSpeedEnabled && startSpeed > maxStartingSpeed) ? maxStartingSpeed : startSpeed;
+            if (!playerTimers[player.Slot].HideChatSpeed)
+            {
+                Utils.PrintToChat(player, $"{Localizer["start_speed"]} {ChatColors.Olive}{printSpeed}");
+            }
+            Utils.PrintToSpec(player, $"{Localizer["start_speed"]} {ChatColors.Olive}{printSpeed}");
+        }
+      
         private void RemovePlayerCollision(CCSPlayerController? player)
         {
-            try
-            {
-                Server.NextFrame(() =>
-                {
-                    if (removeCollisionEnabled == false || !IsAllowedPlayer(player)) return;
-
-                    player!.Pawn.Value!.Collision.CollisionAttribute.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
-                    player!.Pawn.Value!.Collision.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
-
-                    Utilities.SetStateChanged(player, "CCollisionProperty", "m_CollisionGroup");
-                    Utilities.SetStateChanged(player, "CCollisionProperty", "m_collisionAttribute");
-
-                    SharpTimerDebug($"Removed Collison for {player.PlayerName}");
-                });
-            }
-            catch (Exception ex)
-            {
-                SharpTimerError($"Error in RemovePlayerCollision: {ex.Message}");
-            }
-        }
-
-        public async Task<(int, string)> GetStageTime(string steamId, int stageIndex)
-        {
-            string fileName = $"{currentMapName!.ToLower()}_stage_times.json";
-            string playerStageRecordsPath = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerStageData", fileName);
+            if (player == null) return;
+            var pawn = player.Pawn();
+            if (pawn == null) return;
 
             try
             {
-                using (JsonDocument? jsonDocument = await LoadJson(playerStageRecordsPath)!)
-                {
-                    if (jsonDocument != null)
-                    {
-                        string jsonContent = jsonDocument.RootElement.GetRawText();
+                if (removeCollisionEnabled == false)
+                    return;
 
-                        Dictionary<string, PlayerStageData> playerData;
-                        if (!string.IsNullOrEmpty(jsonContent))
-                        {
-                            playerData = JsonSerializer.Deserialize<Dictionary<string, PlayerStageData>>(jsonContent)!;
+                pawn.Collision.CollisionAttribute.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
+                pawn.Collision.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
 
-                            if (playerData!.TryGetValue(steamId, out var playerStageData))
-                            {
-                                if (playerStageData.StageTimes != null && playerStageData.StageTimes.TryGetValue(stageIndex, out var time) &&
-                                    playerStageData.StageVelos != null && playerStageData.StageVelos.TryGetValue(stageIndex, out var speed))
-                                {
-                                    return (time, speed);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        SharpTimerDebug($"Error in GetStageTime jsonDoc was null");
-                    }
-                }
+                Utilities.SetStateChanged(player, "CCollisionProperty", "m_CollisionGroup");
+                Utilities.SetStateChanged(player, "CCollisionProperty", "m_collisionAttribute");
+
+                Utils.LogDebug($"Removed Collison for {player.PlayerName}");
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in GetStageTime: {ex.Message}");
+                Utils.LogError($"Error in RemovePlayerCollision: {ex.Message}");
             }
-
-            return (0, string.Empty);
         }
 
-        public async Task<int> GetPreviousPlayerRecord(CCSPlayerController? player, string steamId, int bonusX = 0)
+        public async Task<int> GetPreviousPlayerRecord(string steamId, int bonusX = 0)
         {
-            if (!IsAllowedPlayer(player))
-            {
-                SharpTimerDebug("Player not allowed.");
-                return 0;
-            }
-
             string currentMapNamee = bonusX == 0 ? currentMapName! : $"{currentMapName}_bonus{bonusX}";
             string mapRecordsFileName = $"{currentMapNamee}.json";
             string mapRecordsPath = Path.Combine(playerRecordsPath!, mapRecordsFileName);
 
             try
             {
-                JsonDocument? jsonDoc = await LoadJson(mapRecordsPath);
+                JsonDocument? jsonDoc = await Utils.LoadJson(mapRecordsPath);
                 if (jsonDoc != null)
                 {
                     var root = jsonDoc.RootElement;
@@ -254,12 +253,12 @@ namespace SharpTimer
                 }
                 else
                 {
-                    SharpTimerDebug($"Map records file does not exist: {mapRecordsPath}");
+                    Utils.LogDebug($"Map records file does not exist: {mapRecordsPath}");
                 }
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in GetPreviousPlayerRecord: {ex.Message}");
+                Utils.LogError($"Error in GetPreviousPlayerRecord: {ex.Message}");
             }
 
             return 0;
@@ -267,14 +266,43 @@ namespace SharpTimer
 
         public string GetPlayerPlacement(CCSPlayerController? player)
         {
-            if (!IsAllowedPlayer(player) || !playerTimers[player!.Slot].IsTimerRunning) return "";
-
+            if (!IsAllowedPlayer(player) || !playerTimers[player!.Slot].IsTimerRunning)
+                return "";
 
             int currentPlayerTime = playerTimers[player.Slot].TimerTicks;
 
             int placement = 1;
 
-            foreach (var kvp in SortedCachedRecords!.Take(100))
+            Dictionary<int, PlayerRecord>? cachedSortedRecords;
+            switch (playerTimers[player.Slot].Mode)
+            {
+                case "Standard":
+                    cachedSortedRecords = SortedCachedStandardRecords;
+                    break;
+                case "85t":
+                    cachedSortedRecords = SortedCached85tRecords;
+                    break;
+                case "102t":
+                    cachedSortedRecords = SortedCached102tRecords;
+                    break;
+                case "128t":
+                    cachedSortedRecords = SortedCached128tRecords;
+                    break;
+                case "Source":
+                    cachedSortedRecords = SortedCachedSourceRecords;
+                    break;
+                case "Bhop":
+                    cachedSortedRecords = SortedCachedBhopRecords;
+                    break;
+                case "Custom":
+                    cachedSortedRecords = SortedCachedCustomRecords;
+                    break;
+                default:
+                    cachedSortedRecords = SortedCachedStandardRecords;
+                    break;
+            }
+            
+            foreach (var kvp in cachedSortedRecords!.Take(100))
             {
                 int recordTimerTicks = kvp.Value.TimerTicks;
 
@@ -297,21 +325,21 @@ namespace SharpTimer
             }
         }
 
-        public async Task<string> GetPlayerMapPlacementWithTotal(CCSPlayerController? player, string steamId, string playerName, bool getRankImg = false, bool getPlacementOnly = false, int bonusX = 0, int style = 0)
+        public async Task<string> GetPlayerMapPlacementWithTotal(CCSPlayerController? player, string steamId, string playerName, bool getRankImg = false, bool getPlacementOnly = false, int bonusX = 0, int style = 0, bool getPercentileOnly = false, string mode = "")
         {
             try
             {
-                if (!IsAllowedClient(player))
+                if (!IsPlayerOrSpectator(player))
                     return "";
 
                 string currentMapNamee = bonusX == 0 ? currentMapName! : $"{currentMapName}_bonus{bonusX}";
 
-                int savedPlayerTime = enableDb ? await GetPreviousPlayerRecordFromDatabase(player, steamId, currentMapName!, playerName, bonusX, style) : await GetPreviousPlayerRecord(player, steamId, bonusX);
+                int savedPlayerTime = await GetPreviousPlayerRecordFromDatabase(steamId, currentMapName!, playerName, bonusX, style, mode);
 
                 if (savedPlayerTime == 0)
                     return getRankImg ? UnrankedIcon : UnrankedTitle;
 
-                Dictionary<string, PlayerRecord> sortedRecords = enableDb ? await GetSortedRecordsFromDatabase(0, bonusX, currentMapNamee, style) : await GetSortedRecords();
+                Dictionary<int, PlayerRecord> sortedRecords = await GetSortedRecordsFromDatabase(0, bonusX, currentMapNamee, style, mode);
 
                 int placement = sortedRecords.Count(kv => kv.Value.TimerTicks < savedPlayerTime) + 1;
                 int totalPlayers = sortedRecords.Count;
@@ -321,15 +349,99 @@ namespace SharpTimer
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in GetPlayerMapPlacementWithTotal: {ex}");
+                Utils.LogError($"Error in GetPlayerMapPlacementWithTotal: {ex}");
                 return UnrankedTitle;
+            }
+        }
+        public async Task<double> GetPlayerMapPercentile(string steamId, string playerName, string mapname = "", int bonusX = 0, int style = 0, bool global = false, int timerTicks = 0, string mode = "")
+        {
+            try
+            {
+                string currentMapNamee;
+                if (mapname == "")
+                    currentMapNamee = bonusX == 0 ? currentMapName! : $"{currentMapName}_bonus{bonusX}";
+                else
+                    currentMapNamee = bonusX == 0 ? mapname! : $"{mapname}_bonus{bonusX}";
+
+                int savedPlayerTime = await GetPreviousPlayerRecordFromDatabase(steamId, currentMapNamee!, playerName, bonusX, style, mode);
+                
+                if (savedPlayerTime == 0)
+                    savedPlayerTime = timerTicks;
+
+                Dictionary<int, PlayerRecord> sortedRecords;
+                
+                sortedRecords = await GetSortedRecordsFromDatabase(0, bonusX, currentMapNamee, style, mode);
+
+                int placement = 1;
+                int totalPlayers = sortedRecords.Count;
+
+                if (totalPlayers > 0)
+                {
+                    placement = sortedRecords.Count(kv => kv.Value.TimerTicks < savedPlayerTime) + 1;
+
+                    if (placement > totalPlayers)
+                    {
+                        placement = totalPlayers;
+                    }
+                }
+
+                double percentage = totalPlayers == 0 ? 100 : (double)placement / totalPlayers * 100;
+
+                Utils.LogDebug($"Player: {playerName}, Placement: {placement}, Total Players: {totalPlayers}, Percentage: {percentage}th");
+
+                return percentage;
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError($"Error in GetPlayerMapPercentile: {ex}");
+                return 0;
+            }
+        }
+        public async Task<double> GetPlayerGlobalMapPercentile(int playerId, string mode, string style, int bonus, decimal time)
+        {
+            try
+            {
+                decimal savedPlayerTime;
+                
+                savedPlayerTime = await GetPreviousPlayerRecordFromGlobal(playerId, mode, style, bonus);
+
+                if (savedPlayerTime == 0)
+                    savedPlayerTime = time;
+
+                Dictionary<int, GlobalRecord> sortedRecords;
+                
+                sortedRecords = await GetSortedRecordsFromGlobal(style, mode, bonus);
+
+                int placement = 1;
+                int totalPlayers = sortedRecords.Count;
+
+                if (totalPlayers > 0)
+                {
+                    placement = sortedRecords.Count(kv => kv.Value.time < savedPlayerTime) + 1;
+
+                    if (placement > totalPlayers)
+                    {
+                        placement = totalPlayers;
+                    }
+                }
+
+                double percentage = totalPlayers == 0 ? 100 : (double)placement / totalPlayers * 100;
+
+                Utils.LogDebug($"Player ID: {playerId}, Placement: {placement}, Total Players: {totalPlayers}, Percentage: {percentage}th");
+
+                return percentage;
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError($"Error in GetPlayerGlobalMapPercentile: {ex}");
+                return 0;
             }
         }
         public async Task<string> GetPlayerStagePlacementWithTotal(CCSPlayerController? player, string steamId, string playerName, int stage, bool getRankImg = false, bool getPlacementOnly = false, int bonusX = 0)
         {
             try
             {
-                if (!IsAllowedClient(player))
+                if (!IsPlayerOrSpectator(player))
                     return "";
 
                 string currentMapNamee = bonusX == 0 ? currentMapName! : $"{currentMapName}_bonus{bonusX}";
@@ -339,7 +451,7 @@ namespace SharpTimer
                 if (savedPlayerTime == 0)
                     return getRankImg ? UnrankedIcon : UnrankedTitle;
 
-                Dictionary<string, PlayerRecord> sortedRecords = await GetSortedStageRecordsFromDatabase(stage, 0, bonusX, currentMapNamee);
+                Dictionary<string, PlayerRecord> sortedRecords = await GetSortedStageRecordsFromDatabase(stage, 0, bonusX, currentMapNamee, playerTimers[player!.Slot].currentStyle, playerTimers[player.Slot].Mode);
 
                 int placement = sortedRecords.Count(kv => kv.Value.TimerTicks < savedPlayerTime) + 1;
                 int totalPlayers = sortedRecords.Count;
@@ -349,7 +461,7 @@ namespace SharpTimer
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in GetPlayerStagePlacementWithTotal: {ex}");
+                Utils.LogError($"Error in GetPlayerStagePlacementWithTotal: {ex}");
                 return UnrankedTitle;
             }
         }
@@ -358,7 +470,7 @@ namespace SharpTimer
         {
             try
             {
-                if (!IsAllowedClient(player))
+                if (!IsPlayerOrSpectator(player))
                     return "";
 
                 int savedPlayerPoints = enableDb ? await GetPlayerPointsFromDatabase(player, steamId, playerName) : 0;
@@ -379,7 +491,7 @@ namespace SharpTimer
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in GetPlayerServerPlacement: {ex}");
+                Utils.LogError($"Error in GetPlayerServerPlacement: {ex}");
                 return UnrankedTitle;
             }
         }
@@ -400,7 +512,7 @@ namespace SharpTimer
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in CalculateRankStuff: {ex}");
+                Utils.LogError($"Error in CalculateRankStuff: {ex}");
                 return UnrankedTitle;
             }
         }
@@ -409,100 +521,195 @@ namespace SharpTimer
         {
             if (player.IsValid && playerTimers!.TryGetValue(player.Slot, out var playerTimer))
             {
-                if (!playerTimers[player.Slot].IsTimerBlocked)
-                {
-                    playerCheckpoints.Remove(player.Slot);
-                }
-                playerTimers[player.Slot].TimerTicks = 0;
-                playerTimers[player.Slot].BonusTimerTicks = 0;
-                playerTimers[player.Slot].IsTimerRunning = false;
-                playerTimers[player.Slot].IsBonusTimerRunning = false;
+                playerTimer.TimerTicks = 0;
+                playerTimer.StageTicks = 0;
+                playerTimer.BonusTimerTicks = 0;
+                playerTimer.IsTimerRunning = false;
+                playerTimer.IsBonusTimerRunning = false;
+
                 if (stageTriggerCount != 0 && useStageTriggers == true)
                 {
-                    playerTimers[player.Slot].StageTimes!.Clear();
-                    playerTimers[player.Slot].StageVelos!.Clear();
-                    playerTimers[player.Slot].CurrentMapStage = stageTriggers.GetValueOrDefault(callerHandle, 0);
+                    if (playerTimer.StageTimes != null)
+                        playerTimer.StageTimes.Clear();
+            
+                    if (playerTimer.StageVelos != null)
+                        playerTimer.StageVelos.Clear();
+                    playerTimer.CurrentMapStage = stageTriggers.GetValueOrDefault(callerHandle, 0);
                 }
+
                 if (cpTriggerCount != 0)
                 {
-                    playerTimers[player.Slot].StageTimes!.Clear();
-                    playerTimers[player.Slot].StageVelos!.Clear();
-                    playerTimers[player.Slot].CurrentMapCheckpoint = 0;
+                    if (playerTimer.StageTimes != null)
+                        playerTimer.StageTimes.Clear();
+            
+                    if (playerTimer.StageVelos != null)
+                        playerTimer.StageVelos.Clear();
+                    playerTimer.CurrentMapCheckpoint = 0;
                 }
             }
         }
 
-        private HookResult OnCommandJoinTeam(CCSPlayerController? player, CounterStrikeSharp.API.Modules.Commands.CommandInfo commandInfo)
+        public void OnSyncTick(CCSPlayerController player, PlayerButtons? buttons, QAngle eyeangle)
         {
-            if (player == null || !player.IsValid) return HookResult.Handled;
-            InvalidateTimer(player);
-            return HookResult.Continue;
+            try
+            {
+                var playerTimer = playerTimers[player.Slot];
+                bool strafingLeft = false;
+                bool strafingRight = false;
+                // Start with 100% sync initially
+                if (playerTimers[player.Slot].inStartzone) playerTimer.Sync = 100.00f;
+
+                if ((buttons & PlayerButtons.Moveleft) != 0 && (buttons & PlayerButtons.Moveright) != 0)
+                {
+                    return; // Ignore if both left and right are pressed
+                }
+                else if ((buttons & PlayerButtons.Moveleft) != 0)
+                {
+                    strafingLeft = true;
+                }
+                else if ((buttons & PlayerButtons.Moveright) != 0)
+                {
+                    strafingRight = true;
+                }
+                else
+                {
+                    return; // Ignore if neither left nor right is pressed
+                }
+
+                // Add the current eye angle to the rotation history
+                QAngle_t newEyeAngle = new QAngle_t(eyeangle.X, eyeangle.Y, eyeangle.Z);
+                playerTimer.Rotation.Add(newEyeAngle);
+
+                // Cap rotation history at 1000 entries
+                if (playerTimer.Rotation.Count > 1000)
+                {
+                    playerTimer.Rotation.RemoveAt(0); // Remove the oldest entry
+                }
+
+                // Only proceed if we have enough data points in Rotation
+                if (playerTimer.Rotation.Count > 1)
+                {
+                    float previousEyeAngleY = playerTimer.Rotation[playerTimer.Rotation.Count - 2].Y; // Use Rotation.Count - 2
+                    float currentEyeAngleY = eyeangle.Y;
+
+                    // Normalize angle difference to handle wrapping from -180 to 180
+                    float deltaY = currentEyeAngleY - previousEyeAngleY;
+                    if (deltaY > 180)
+                    {
+                        deltaY -= 360;
+                    }
+                    else if (deltaY < -180)
+                    {
+                        deltaY += 360;
+                    }
+
+                    if (Math.Abs(deltaY) < 0.01f) return;
+
+                    bool onGround = ((PlayerFlags)player.Pawn.Value!.Flags & PlayerFlags.FL_ONGROUND) == PlayerFlags.FL_ONGROUND;
+                    if (onGround || (!onGround && (buttons & (PlayerButtons.Moveleft | PlayerButtons.Moveright)) == 0))
+                    {
+                        return; // Ignore calculation if the player is on the ground or airborne without pressing movement buttons
+                    }
+                    else
+                    {
+                        // Increment frames in the air
+                        playerTimer.TotalSync++;
+                    }
+
+                    // Determine rotation direction
+                    bool rotatingLeft = deltaY > 0;
+                    bool rotatingRight = deltaY < 0;
+
+                    // Add sync frame if strafing and rotating match and the player is airborne
+                    if (!onGround && ((strafingLeft && rotatingLeft) || (strafingRight && rotatingRight)))
+                    {
+                        playerTimer.GoodSync++; // Increment sync frames
+                    }
+                }
+
+                // Calculate sync percentage
+                if (playerTimer.TotalSync >= 2) // Adjust threshold as needed
+                {
+                    playerTimer.Sync = (playerTimer.TotalSync > 0)
+                        ? (playerTimer.GoodSync / (float)playerTimer.TotalSync) * 100
+                        : 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Utils.LogDebug($"Exception in OnSyncTick: {ex}");
+            }
         }
 
-        public async Task PrintMapTimeToChat(CCSPlayerController player, string steamID, string playerName, int oldticks, int newticks, int bonusX = 0, int timesFinished = 0, int style = 0, int prevSR = 0)
+        public async Task PrintMapTimeToChat(CCSPlayerController player, string steamID, string playerName, int oldticks, int newticks, int bonusX = 0, int timesFinished = 0, int style = 0, int prevSR = 0, string mode = "")
         {
             if (!IsAllowedPlayer(player))
             {
-                SharpTimerError($"Error in PrintMapTimeToChat: Player {playerName} not allowed or not on server anymore");
+                Utils.LogError($"Error in PrintMapTimeToChat: Player {playerName} not allowed or not on server anymore");
                 return;
             }
 
-            string ranking = await GetPlayerMapPlacementWithTotal(player, steamID, playerName, false, true, bonusX, style);
+            string ranking = await GetPlayerMapPlacementWithTotal(player, steamID, playerName, false, true, bonusX, style, false, mode);
 
-            bool newSR = GetNumberBeforeSlash(ranking) == 1 && (oldticks > newticks || oldticks == 0);
+            bool newSR = Utils.GetNumberBeforeSlash(ranking) == 1 && (oldticks > newticks || oldticks == 0);
             bool beatPB = oldticks > newticks;
-            string newTime = FormatTime(newticks);
+            string newTime = Utils.FormatTime(newticks);
             string timeDifferenceNoCol = "";
             string timeDifference = "";
             if (oldticks != 0)
             {
-                if (discordWebhookEnabled) timeDifferenceNoCol = FormatTimeDifference(newticks, oldticks, true);
-                timeDifference = $"[{FormatTimeDifference(newticks, oldticks)}{ChatColors.White}] ";
+                if (discordWebhookEnabled) timeDifferenceNoCol = Utils.FormatTimeDifference(newticks, oldticks, true);
+                timeDifference = $"[{Utils.FormatTimeDifference(newticks, oldticks)}{ChatColors.White}] ";
             }
 
             Server.NextFrame(() =>
             {
-                if (IsAllowedPlayer(player) && timesFinished > maxGlobalFreePoints && globalRanksFreePointsEnabled == true && oldticks < newticks)
-                    PrintToChat(player, Localizer["reached_max_free", maxGlobalFreePoints]);
-
                 if (newSR)
                 {
                     if (prevSR != 0)
                     {
-                        timeDifference = $"[{FormatTimeDifference(newticks, prevSR)}{ChatColors.White}] ";
+                        timeDifference = $"[{Utils.FormatTimeDifference(newticks, prevSR)}{ChatColors.White}] ";
                     }
-                    if (bonusX != 0) PrintToChatAll(Localizer["new_server_record_bonus", playerName, bonusX]);
+                    if (bonusX != 0) Utils.PrintToChatAll(Localizer["new_server_record_bonus", playerName, bonusX]);
                     else
                     {
-                        PrintToChatAll(Localizer["new_server_record", playerName]);
-                        if (srSoundAll) SendCommandToEveryone($"play {srSound}");
-                        else PlaySound(player, srSound);
+                        Utils.PrintToChatAll(Localizer["new_server_record", playerName]);
+                        PlaySound(player, srSound, srSoundAll);
                     }
                     if (discordWebhookPrintSR && discordWebhookEnabled && enableDb) _ = Task.Run(async () => await DiscordRecordMessage(player, playerName, newTime, steamID, ranking, timesFinished, true, timeDifferenceNoCol, bonusX));
                 }
                 else if (beatPB)
                 {
-                    if (bonusX != 0) PrintToChatAll(Localizer["new_pb_record_bonus", playerName, bonusX]);
-                    else PrintToChatAll(Localizer["new_pb_record", playerName]);
+                    if (bonusX != 0) Utils.PrintToChatAll(Localizer["new_pb_record_bonus", playerName, bonusX]);
+                    else Utils.PrintToChatAll(Localizer["new_pb_record", playerName]);
                     if (discordWebhookPrintPB && discordWebhookEnabled && enableDb) _ = Task.Run(async () => await DiscordRecordMessage(player, playerName, newTime, steamID, ranking, timesFinished, false, timeDifferenceNoCol, bonusX));
                     PlaySound(player, pbSound);
                 }
                 else
                 {
-                    if (bonusX != 0) PrintToChatAll(Localizer["map_finish_bonus", playerName, bonusX]);
-                    else PrintToChatAll(Localizer["map_finish", playerName]);
+                    if (bonusX != 0) Utils.PrintToChatAll(Localizer["map_finish_bonus", playerName, bonusX]);
+                    else Utils.PrintToChatAll(Localizer["map_finish", playerName]);
                     if (discordWebhookPrintPB && discordWebhookEnabled && timesFinished == 1 && enableDb) _ = Task.Run(async () => await DiscordRecordMessage(player, playerName, newTime, steamID, ranking, timesFinished, false, timeDifferenceNoCol, bonusX));
                     PlaySound(player, timerSound);
                 }
 
                 if (enableDb || bonusX != 0)
-                    PrintToChatAll($"Rank: [{primaryChatColor}{ranking}{ChatColors.White}] " + (timesFinished != 0 && enableDb ? $"Times Finished: [{primaryChatColor}{timesFinished}{ChatColors.White}]" : ""));
+                    Utils.PrintToChatAll(Localizer["map_finish_rank", ranking, timesFinished]);
 
-                PrintToChatAll(Localizer["timer_time", newTime, timeDifference]);
-                if (enableStyles) PrintToChatAll(Localizer["timer_style", GetNamedStyle(style)]);
-                if (enableReplays == true && enableSRreplayBot == true && newSR && (oldticks > newticks || oldticks == 0))
-                {
+                Utils.PrintToChatAll(Localizer["timer_time", newTime, timeDifference]);
+                if (enableStyles && playerTimers[player.Slot].currentStyle != 0) Utils.PrintToChatAll(Localizer["timer_style", GetNamedStyle(style)]);
+                if (mode != GetModeName(defaultMode))Utils.PrintToChatAll(Localizer["timer_mode", mode]);
+                if (enableReplays && enableSRreplayBot && newSR && (oldticks > newticks || oldticks == 0) && mode == GetModeName(defaultMode))
                     _ = Task.Run(async () => await SpawnReplayBot());
+                
+                try
+                {
+                    StEventSenderCapability.Get()
+                        ?.TriggerEvent(new FinishMapEvent(player, newSR, beatPB, currentMapTier ?? 1));
+                }
+                catch (Exception e)
+                {
+                    Utils.LogError($"Couldn't trigger timer stop event {e.Message}");
                 }
             });
         }
@@ -510,21 +717,21 @@ namespace SharpTimer
         {
             if (!IsAllowedPlayer(player))
             {
-                SharpTimerError($"Error in PrintStageTimeToChat: Player {playerName} not allowed or not on server anymore");
+                Utils.LogError($"Error in PrintStageTimeToChat: Player {playerName} not allowed or not on server anymore");
                 return;
             }
 
             string ranking = await GetPlayerStagePlacementWithTotal(player, steamID, playerName, stage, false, true, bonusX);
 
-            bool newSR = GetNumberBeforeSlash(ranking) == 1 && (oldticks > newticks || oldticks == 0);
+            bool newSR = Utils.GetNumberBeforeSlash(ranking) == 1 && (oldticks > newticks || oldticks == 0);
             bool beatPB = oldticks > newticks;
-            string newTime = FormatTime(newticks);
+            string newTime = Utils.FormatTime(newticks);
             string timeDifferenceNoCol = "";
             string timeDifference = "";
             if (oldticks != 0)
             {
-                if (discordWebhookEnabled) timeDifferenceNoCol = FormatTimeDifference(newticks, oldticks, true);
-                timeDifference = $"[{FormatTimeDifference(newticks, oldticks)}{ChatColors.White}] ";
+                if (discordWebhookEnabled) timeDifferenceNoCol = Utils.FormatTimeDifference(newticks, oldticks, true);
+                timeDifference = $"[{Utils.FormatTimeDifference(newticks, oldticks)}{ChatColors.White}] ";
             }
 
             Server.NextFrame(() =>
@@ -533,61 +740,72 @@ namespace SharpTimer
                 {
                     if (prevSR != 0)
                     {
-                        timeDifference = $"[{FormatTimeDifference(newticks, prevSR)}{ChatColors.White}] ";
+                        timeDifference = $"[{Utils.FormatTimeDifference(newticks, prevSR)}{ChatColors.White}] ";
                     }
-                    PrintToChatAll(Localizer["new_stage_server_record", playerName]);
-                    if (stageSoundAll) SendCommandToEveryone($"play {srSound}");
-                    else PlaySound(player, srSound);
-                    PrintToChatAll(Localizer["timer_time", newTime, timeDifference]);
+
+                    var recordKey = (useStageTriggers || !useCheckpointTriggers)
+                        ? "new_stage_server_record"
+                        : "new_cp_server_record";
+                    Utils.PrintToChatAll(Localizer[recordKey, playerName]);
+
+                    PlaySound(player, srSound, stageSoundAll ? true : false);
+                    Utils.PrintToChatAll(Localizer["timer_time", newTime, timeDifference]);
                     //TODO: Discord webhook stage sr
-                    //if (discordWebhookPrintSR && discordWebhookEnabled && enableDb) _ = Task.Run(async () => await DiscordRecordMessage(player, playerName, newTime, steamID, ranking, timesFinished, true, timeDifferenceNoCol, bonusX));
+                    // if (discordWebhookPrintSR && discordWebhookEnabled && enableDb) _ = Task.Run(async () => await DiscordRecordMessage(player, playerName, newTime, steamID, ranking, timesFinished, true, timeDifferenceNoCol, bonusX));
                 }
             });
         }
 
-        public void AddScoreboardTagToPlayer(CCSPlayerController player, string tag)
+        public void AddRankTagToPlayer(CCSPlayerController player, string rank)
         {
             try
             {
-
-                if (string.IsNullOrEmpty(tag))
+                if (string.IsNullOrEmpty(rank))
                     return;
 
-                if (player == null || !player.IsValid)
-                    return;
+                if (TagApi == null)
+                    TagApi = ITagApi.Capability.Get();
 
-                string originalPlayerName = player.PlayerName;
-
-                string stripedClanTag = RemovePlayerTags(player.Clan ?? "");
-
-                player.Clan = $"{stripedClanTag}{(playerTimers[player.Slot].IsVip ? $"{customVIPTag}" : "")}{tag}";
-
-                player.PlayerName = originalPlayerName + " ";
-
-                AddTimer(0.1f, () =>
+                if (TagApi == null)
                 {
-                    if (player.IsValid)
+                    Utils.LogError("(SetClanTagAPI) Failed load TagApi");
+                    return;
+                }
+
+                string clanTag = $"{rank} " +
+                 (playerTimers[player.Slot].IsVip ? $"{customVIPTag} " : "");
+
+                string rankColor = GetRankColorForChat(player);
+                string chatTag = $" {rankColor}{rank}{ChatColors.Default} " +
+                 (playerTimers[player.Slot].IsVip ? $"{ChatColors.Blue}{customVIPTag}{ChatColors.Default} " : "");
+
+                if (displayChatTags)
+                {
+                    TagApi.ResetAttribute(player, Tags.TagType.ChatTag);
+
+                    Server.NextFrame(() =>
                     {
-                        Utilities.SetStateChanged(player, "CCSPlayerController", "m_szClan");
-                        Utilities.SetStateChanged(player, "CBasePlayerController", "m_iszPlayerName");
-                    }
-                });
+                        string oldChatTag = TagApi.GetAttribute(player, Tags.TagType.ChatTag) ?? "";
+                        TagApi.SetAttribute(player, Tags.TagType.ChatTag, oldChatTag + chatTag);
+                    });
+                }
 
-                AddTimer(0.2f, () =>
+                if (displayScoreboardTags)
                 {
-                    if (player.IsValid) player.PlayerName = originalPlayerName;
-                });
+                    TagApi.ResetAttribute(player, Tags.TagType.ScoreTag);
 
-                AddTimer(0.3f, () =>
-                {
-                    if (player.IsValid) Utilities.SetStateChanged(player, "CBasePlayerController", "m_iszPlayerName");
-                });
+                    Server.NextFrame(() =>
+                    {
+                        string oldClanTag = TagApi.GetAttribute(player, Tags.TagType.ScoreTag) ?? "";
+                        TagApi.SetAttribute(player, Tags.TagType.ScoreTag, oldClanTag + clanTag);
+                    });
+                }
 
-                SharpTimerDebug($"Set Scoreboard Tag for {player.Clan} {player.PlayerName}");
+                Utils.LogDebug($"Set Scoreboard Tag for {player.Clan} {player.PlayerName}");
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in AddScoreboardTagToPlayer: {ex.Message}");
+                Utils.LogError($"Error in AddScoreboardTagToPlayer: {ex.Message}");
             }
         }
 
@@ -602,7 +820,10 @@ namespace SharpTimer
             player.PlayerName = name;
             Utilities.SetStateChanged(player, "CBasePlayerController", "m_iszPlayerName");
 
-            SharpTimerDebug($"Changed PlayerName to {player.PlayerName}");
+            var fakeEvent = new EventNextlevelChanged(false);
+            fakeEvent.FireEvent(false);
+
+            Utils.LogDebug($"Changed PlayerName to {player.PlayerName}");
         }
 
         static void SetMoveType(CCSPlayerController player, MoveType_t nMoveType)
@@ -611,6 +832,7 @@ namespace SharpTimer
 
             player.PlayerPawn.Value!.MoveType = nMoveType; // necessary to maintain client prediction
             player.PlayerPawn.Value!.ActualMoveType = nMoveType;
+            Utilities.SetStateChanged(player!.Pawn.Value!, "CBaseEntity", "m_MoveType");
         }
 
         public string GetRankColorForChat(CCSPlayerController player)
@@ -625,7 +847,7 @@ namespace SharpTimer
                     string color = $"{ChatColors.Default}";
 
                     if (playerTimer.CachedRank.Contains(UnrankedTitle))
-                        color = ReplaceVars(UnrankedColor);
+                        color = Utils.ReplaceVars(UnrankedColor);
 
                     else
                     {
@@ -633,7 +855,7 @@ namespace SharpTimer
                         {
                             if (playerTimer.CachedRank.Contains(rank.Title!))
                             {
-                                color = ReplaceVars(rank.Color!);
+                                color = Utils.ReplaceVars(rank.Color!);
                                 break;
                             }
                         }
@@ -648,20 +870,9 @@ namespace SharpTimer
             }
             catch (Exception ex)
             {
-                SharpTimerError($"Error in GetRankColorForChat: {ex.Message}");
+                Utils.LogError($"Error in GetRankColorForChat: {ex.Message}");
                 return $"{ChatColors.Default}";
             }
-        }
-
-        public void SendCommandToEveryone(string command)
-        {
-            Utilities.GetPlayers().ForEach(player =>
-            {
-                if (player is { IsValid: true, IsBot: false } && playerTimers[player.Slot].SoundsEnabled)
-                {
-                    player.ExecuteClientCommand(command);
-                }
-            });
         }
 
         public static (int, int) GetPlayerTeamCount()
@@ -683,20 +894,38 @@ namespace SharpTimer
             return (ct_count, t_count);
         }
 
-        public void PlaySound(CCSPlayerController? player, string Sound)
+        public void PlaySound(CCSPlayerController player, string sound, bool allPlayers = false)
         {
-            if (playerTimers[player!.Slot].SoundsEnabled != false && IsAllowedPlayer(player))
-                player.ExecuteClientCommand($"play {Sound}");
-        }
+            if (string.IsNullOrEmpty(sound))
+            {
+                Utils.LogError("PlaySound: Sound string is null or empty");
+                return;
+            }
 
-        public void PrintToChat(CCSPlayerController? player, string message)
-        {
-            player?.PrintToChat($" {Localizer["prefix"]} {message}");
-        }
+            var targets = allPlayers
+                ? Utilities.GetPlayers().Where(p => !p.IsBot && playerTimers.TryGetValue(p.Slot, out var t) && t.SoundsEnabled)
+                : (!player.IsBot && playerTimers.TryGetValue(player.Slot, out var t) && t.SoundsEnabled) ? new[] { player } : null;
 
-        public void PrintToChatAll(string message)
-        {
-            Server.PrintToChatAll($" {Localizer["prefix"]} {message}");
+            if (targets == null || targets.Count() <= 0)
+                return;
+
+            foreach (var target in targets)
+            {
+                Server.NextFrame(() =>
+                {
+                    try
+                    {
+                        if (soundeventsEnabled)
+                            target.EmitSound(sound, new(target));
+                        else
+                            target.ExecuteClientCommand($"play {sound}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Utils.LogError($"PlaySound: Error playing sound for {target.PlayerName}: {ex.Message}");
+                    }
+                });
+            }
         }
     }
 }

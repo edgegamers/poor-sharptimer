@@ -1,5 +1,7 @@
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using Vector = CounterStrikeSharp.API.Modules.Utils.Vector;
+using CounterStrikeSharp.API.Modules.Memory;
+using FixVectorLeak;
 
 namespace SharpTimer
 {
@@ -7,6 +9,8 @@ namespace SharpTimer
     {
         public void setStyle(CCSPlayerController player, int style)
         {
+            playerTimers[player.Slot].RespawnPos = "";
+            playerTimers[player.Slot].BonusRespawnPos = "";
             AddTimer(0.1f, () =>
             {
                 SetNormalStyle(player);
@@ -45,6 +49,12 @@ namespace SharpTimer
                     case 10:
                         SetFastForward(player);
                         return;
+                    case 11:
+                        SetParachute(player);
+                        return;
+                    case 12:
+                        SetTAS(player);
+                        return;
                     default:
                         return;
                 }
@@ -55,19 +65,19 @@ namespace SharpTimer
         {
             playerTimers[player.Slot].currentStyle = 0; // reset currentStyle
             playerTimers[player.Slot].changedStyle = true;
-            player!.Pawn.Value!.GravityScale = 1f;
+            Schema.SetSchemaValue(player!.Pawn.Value!.Handle, "CBaseEntity", "m_flActualGravityScale", 1f);
         }
 
         public void SetLowGravity(CCSPlayerController player)
         {
             playerTimers[player.Slot].currentStyle = 1; // 1 = low-gravity
-            player!.Pawn.Value!.GravityScale = 0.5f;
+            Schema.SetSchemaValue(player!.Pawn.Value!.Handle, "CBaseEntity", "m_flActualGravityScale", 0.5f);
             playerTimers[player.Slot].changedStyle = true;
         }
         public void SetHighGravity(CCSPlayerController player)
         {
             playerTimers[player.Slot].currentStyle = 5; // 5 = high-gravity
-            player!.Pawn.Value!.GravityScale = 1.5f;
+            Schema.SetSchemaValue(player!.Pawn.Value!.Handle, "CBaseEntity", "m_flActualGravityScale", 1.5f);
             playerTimers[player.Slot].changedStyle = true;
         }
         public void SetSlowMo(CCSPlayerController player)
@@ -119,8 +129,20 @@ namespace SharpTimer
             playerTimers[player.Slot].currentStyle = 4; // 4 = 400vel
             playerTimers[player.Slot].changedStyle = true;
         }
+        
+        public void SetParachute(CCSPlayerController player)
+        {
+            playerTimers[player.Slot].currentStyle = 11; // 11 = parachute
+            playerTimers[player.Slot].changedStyle = true;
+        }
+        
+        public void SetTAS(CCSPlayerController player)
+        {
+            playerTimers[player.Slot].currentStyle = 12; // 12 = TAS
+            playerTimers[player.Slot].changedStyle = true;
+        }
 
-        public void SetVelocity(CCSPlayerController player, Vector currentVel, int desiredVel)
+        public void SetVelocity(CCSPlayerController player, Vector_t currentVel, int desiredVel)
         {
             if(currentVel.X > desiredVel) player!.PlayerPawn.Value!.AbsVelocity.X = desiredVel;
             if(currentVel.X < -desiredVel) player!.PlayerPawn.Value!.AbsVelocity.X = -desiredVel;
@@ -163,13 +185,51 @@ namespace SharpTimer
                     return "Half Sideways";
                 case 10:
                     return "Fast Forward";
+                case 11:
+                    return "Parachute";
+                case 12:
+                    return "TAS";
                 default:
                     return "null";
             }
         }
 
-        public double GetStyleMultiplier(int style)
+        public double GetStyleMultiplier(int style, bool global = false)
         {
+            if (global)
+            {
+                switch(style)
+                {
+                    case 0:
+                        return 1;
+                    case 1:
+                        return 0.8;
+                    case 2:
+                        return 1.3;
+                    case 3:
+                        return 1.3;
+                    case 4:
+                        return 1.5;
+                    case 5:
+                        return 1;
+                    case 6:
+                        return 1.33;
+                    case 7:
+                        return 1.33;
+                    case 8:
+                        return 1.33;
+                    case 9:
+                        return 1.3;
+                    case 10:
+                        return 0.8;
+                    case 11:
+                        return 0.8;
+                    case 12:
+                        return 0.0;
+                    default:
+                        return 1;
+                }
+            }
             switch(style)
             {
                 case 0:
@@ -193,7 +253,11 @@ namespace SharpTimer
                 case 9:
                     return halfSidewaysPointModifier; // 1.3x for halfsideways
                 case 10:
-                    return fastForwardPointModifier; // 1.3x for halfsideways
+                    return fastForwardPointModifier; // 1.3x for ff
+                case 11:
+                    return parachutePointModifier; // 0.8x for parachute
+                case 12:
+                    return tasPointModifier; // 0.0x for TAS
                 default:
                     return 1;
             }
