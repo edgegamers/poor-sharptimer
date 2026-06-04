@@ -14,6 +14,7 @@ public partial class SharpTimer
     {
         try
         {
+            _gameRules = null;
             Server.NextFrame(() =>
             {
                 Utils.LogDebug("OnMapStart:");

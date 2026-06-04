@@ -29,6 +29,8 @@ namespace SharpTimer
             {
                 int currentTick = Server.TickCount;
 
+                UpdateGameRestartFlag();
+
                 foreach (CCSPlayerController player in connectedPlayers.Values)
                 {
                     if (player == null || !player.IsValid) continue;
