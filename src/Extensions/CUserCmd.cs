@@ -9,7 +9,7 @@ public class CUserCmd
         Handle = pointer;
     }
 
-    private Dictionary<Int64, string> buttonNames = new Dictionary<Int64, string>
+    private Dictionary<long, string> buttonNames = new Dictionary<long, string>
     {
         {1, "Left Click"},
         {2, "Jump"},
@@ -17,34 +17,13 @@ public class CUserCmd
         {8, "Forward"},
         {16, "Backward"},
         {32, "Use"},
-        // 64 ??
         {128, "Turn Left"},
         {256, "Turn Right"},
         {512, "Left"},
         {1024, "Right"},
         {2048, "Right Click"},
         {8192, "Reload"},
-        // 16384 ??
-        // 32768 ??
         {65536, "Shift"},
-        /* 
-        131072 ??
-        262144 ??
-        524288 ??
-        1048576 ??
-        2097152 ??
-        4194304 ??
-        8388608 ??
-        16777216 ??
-        33554432 ??
-        67108864 ??
-        134217728 ??
-        268435456 ??
-        536870912 ??
-        1073741824 ??
-        2147483648 ??
-        4294967296 ?? 
-        */
         {8589934592, "Scoreboard"},
         {34359738368, "Inspect"}
     };
@@ -87,7 +66,15 @@ public class CUserCmd
     }
     public unsafe void DisableInput(IntPtr userCmd, nint value)
     {
-        Unsafe.Write((void*)(userCmd + 0x50), Unsafe.Read<IntPtr>((void*)(userCmd + 0x50)) & ~(value));
+        Unsafe.Write((void*)(userCmd + 0x60), Unsafe.Read<ulong>((void*)(userCmd + 0x60)) & ~(ulong)value);
+    }
+
+    public unsafe ulong GetInputMask()
+    {
+        if (Handle == IntPtr.Zero)
+            return 0;
+
+        return Unsafe.Read<ulong>((void*)(Handle + 0x60));
     }
     public unsafe QAngle_t? GetViewAngles()
     {
