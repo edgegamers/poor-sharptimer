@@ -130,7 +130,11 @@ namespace SharpTimer
 
             if (useTriggers || useTriggersAndFakeZones) Utils.LogDebug($"Stopping Timer for {playerName}");
 
-            if (enableDb) _ = Task.Run(async () => await SavePlayerTimeToDatabase(player, currentTicks, steamID, playerName, slot, 0, playerTimer.currentStyle, playerTimer.Mode));
+            if (enableDb)
+            {
+                bool playerValid = IsAllowedPlayer(player);
+                _ = Task.Run(async () => await SavePlayerTimeToDatabase(player, currentTicks, steamID, playerName, slot, playerValid, 0, playerTimer.currentStyle, playerTimer.Mode));
+            }
 
             playerTimer.IsTimerRunning = false;
             playerTimer.IsRecordingReplay = false;
@@ -160,13 +164,14 @@ namespace SharpTimer
                 return;
             }
 
-            _ = Task.Run(async () => await SavePlayerTimeToDatabase(player, currentTicks, steamID, playerName, slot, bonusX, playerTimers[player.Slot].currentStyle, playerTimer.Mode));
+            bool playerValid = IsAllowedPlayer(player);
+            _ = Task.Run(async () => await SavePlayerTimeToDatabase(player, currentTicks, steamID, playerName, slot, playerValid, bonusX, playerTimers[player.Slot].currentStyle, playerTimer.Mode));
 
             playerTimers[player.Slot].IsBonusTimerRunning = false;
             playerTimers[player.Slot].IsRecordingReplay = false;
         }
 
-        private async Task HandlePlayerStageTimes(CCSPlayerController player, nint triggerHandle, int slot, string playerSteamID, string playerName, int style, string mode)
+        private async Task HandlePlayerStageTimes(CCSPlayerController player, nint triggerHandle, int slot, string playerSteamID, string playerName, int style, string mode, bool playerCheck)
         {
             try
             {
@@ -248,7 +253,7 @@ namespace SharpTimer
                     
                     if (playerTimers.TryGetValue(player.Slot, out var timer) && timer?.currentStyle == 0)
                     {
-                        await SavePlayerStageTimeToDatabase(player, playerStageTicks, prevStage, currentSpeed, playerSteamID, playerName, slot);
+                        await SavePlayerStageTimeToDatabase(player, playerStageTicks, prevStage, currentSpeed, playerSteamID, playerName, slot, playerCheck);
                     }
                 }
             }
@@ -258,7 +263,7 @@ namespace SharpTimer
             }
         }
 
-        private async Task HandlePlayerCheckpointTimes(CCSPlayerController player, nint triggerHandle, int slot, string playerSteamID, string playerName, int style, string mode)
+        private async Task HandlePlayerCheckpointTimes(CCSPlayerController player, nint triggerHandle, int slot, string playerSteamID, string playerName, int style, string mode, bool playerCheck)
         {
             try
             {
@@ -351,7 +356,7 @@ namespace SharpTimer
 
                     if (playerTimers.TryGetValue(player.Slot, out var timer) && timer?.currentStyle == 0)
                     {
-                        await SavePlayerStageTimeToDatabase(player, playerTimerTicks, cpTrigger, currentStageSpeed, playerSteamID, playerName, slot);
+                        await SavePlayerStageTimeToDatabase(player, playerTimerTicks, cpTrigger, currentStageSpeed, playerSteamID, playerName, slot, playerCheck);
                     }
                 }
             }
@@ -361,7 +366,7 @@ namespace SharpTimer
             }
         }
 
-        private async Task HandlePlayerBonusCheckpointTimes(CCSPlayerController player, nint triggerHandle, int slot, string playerSteamID, string playerName, int style, string mode)
+        private async Task HandlePlayerBonusCheckpointTimes(CCSPlayerController player, nint triggerHandle, int slot, string playerSteamID, string playerName, int style, string mode, bool playerCheck)
         {
             try
             {
@@ -457,7 +462,7 @@ namespace SharpTimer
 
                     if (playerTimers.TryGetValue(player.Slot, out var timer) && timer?.currentStyle == 0)
                     {
-                        await SavePlayerStageTimeToDatabase(player, playerTimerTicks, bonusCheckpointTrigger, currentStageSpeed, playerSteamID, playerName, slot);
+                        await SavePlayerStageTimeToDatabase(player, playerTimerTicks, bonusCheckpointTrigger, currentStageSpeed, playerSteamID, playerName, slot, playerCheck);
                     }
                 }
             }

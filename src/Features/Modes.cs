@@ -89,7 +89,8 @@ public partial class SharpTimer
         
         Server.NextFrame(async () =>
         {
-            await SetPlayerStats(player, player.SteamID.ToString(), player.PlayerName, player.Slot);
+            bool playerValid = IsAllowedPlayer(player);
+            await SetPlayerStats(player, player.SteamID.ToString(), player.PlayerName, player.Slot, playerValid);
         });
         playerTimers[player.Slot].RespawnPos = "";
         playerTimers[player.Slot].BonusRespawnPos = "";

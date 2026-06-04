@@ -767,13 +767,13 @@ namespace SharpTimer
         }
 
         public async Task SavePlayerTimeToDatabase(CCSPlayerController? player, int timerTicks, string steamId,
-            string playerName, int slot, int bonusX = 0, int style = 0, string mode = "")
+            string playerName, int slot, bool playerCheck, int bonusX = 0, int style = 0, string mode = "")
         {
             Utils.LogDebug(
                 $"Trying to save player {(bonusX != 0 ? $"bonus {bonusX} time" : "time")} to database for {playerName} {timerTicks}");
             try
             {
-                if (!IsAllowedPlayer(player)) return;
+                if (!playerCheck) return;
                 //if ((bonusX == 0 && !playerTimers[slot].IsTimerRunning) || (bonusX != 0 && !playerTimers[slot].IsBonusTimerRunning)) return;
                 string currentMapNamee = bonusX == 0 ? currentMapName! : $"{currentMapName}_bonus{bonusX}";
 
@@ -945,13 +945,15 @@ namespace SharpTimer
                                 Utils.LogDebug(
                                     $"Saved player {(bonusX != 0 ? $"bonus {bonusX} time" : "time")} to database for {playerName} {timerTicks} {DateTimeOffset.UtcNow.ToUnixTimeSeconds()}"));
                             
-                            if (IsAllowedPlayer(player))
+                            // Re-check validity on the main thread;
+                            Server.NextFrame(() =>
                             {
-                                Server.NextFrame(() => _ = Task.Run(async () => await PrintMapTimeToChat(player!,
+                                if (!IsAllowedPlayer(player)) return;
+                                _ = Task.Run(async () => await PrintMapTimeToChat(player!,
                                     steamId, playerName, dBtimerTicks, timerTicks, bonusX, dBtimesFinished, style,
-                                    prevSRTimerTicks, mode)));
-                                await RankCommandHandler(player, steamId, slot, playerName, true, style, mode);
-                            }
+                                    prevSRTimerTicks, mode));
+                                _ = Task.Run(async () => await RankCommandHandler(player, steamId, slot, playerName, true, style, mode));
+                            });
 
                             if (globalRanksEnabled)
                             {
@@ -1104,12 +1106,14 @@ namespace SharpTimer
                                 Utils.LogDebug(
                                     $"Saved player {(bonusX != 0 ? $"bonus {bonusX} time" : "time")} to database for {playerName} {timerTicks} {DateTimeOffset.UtcNow.ToUnixTimeSeconds()}"));
 
-                            if (IsAllowedPlayer(player))
+                            // re-check validity on the main thread
+                            Server.NextFrame(() =>
                             {
-                                await RankCommandHandler(player, steamId, slot, playerName, true, style, mode);
-                                Server.NextFrame(() => _ = Task.Run(async () => await PrintMapTimeToChat(player!,
-                                    steamId, playerName, dBtimerTicks, timerTicks, bonusX, 1, style, prevSRTimerTicks, mode)));
-                            }
+                                if (!IsAllowedPlayer(player)) return;
+                                _ = Task.Run(async () => await RankCommandHandler(player, steamId, slot, playerName, true, style, mode));
+                                _ = Task.Run(async () => await PrintMapTimeToChat(player!,
+                                    steamId, playerName, dBtimerTicks, timerTicks, bonusX, 1, style, prevSRTimerTicks, mode));
+                            });
 
                             if (enableReplays)
                             {
@@ -1467,13 +1471,13 @@ namespace SharpTimer
         }
 
         public async Task SavePlayerStageTimeToDatabase(CCSPlayerController? player, int timerTicks, int stage,
-            string velocity, string steamId, string playerName, int slot, int bonusX = 0, int style = 0)
+            string velocity, string steamId, string playerName, int slot, bool playerCheck, int bonusX = 0, int style = 0)
         {
             Utils.LogDebug(
                 $"Trying to save player {(bonusX != 0 ? $"bonus {bonusX} stage {stage} time" : $"stage {stage} time")} to database for {playerName} {timerTicks}");
             try
             {
-                if (player == null || !IsAllowedPlayer(player))
+                if (player == null || !playerCheck) // snapshotted on the main thread at the launch site
                     return;
 
                 //if ((bonusX == 0 && !playerTimers[slot].IsTimerRunning) || (bonusX != 0 && !playerTimers[slot].IsBonusTimerRunning)) return;
@@ -1638,9 +1642,13 @@ namespace SharpTimer
                             Server.NextFrame(() =>
                                 Utils.LogDebug(
                                     $"Saved player {(bonusX != 0 ? $"bonus {bonusX} stage {stage} time" : $"{stage} time")} to database for {playerName} {timerTicks} {DateTimeOffset.UtcNow.ToUnixTimeSeconds()}"));
-                            if (IsAllowedPlayer(player) && enableStageTimes && enableStageSR)
-                                Server.NextFrame(() => _ = Task.Run(async () => await PrintStageTimeToChat(player!,
-                                    steamId, playerName, dBtimerTicks, timerTicks, stage, bonusX, prevSR)));
+                            if (enableStageTimes && enableStageSR)
+                                Server.NextFrame(() =>
+                                {
+                                    if (!IsAllowedPlayer(player)) return;
+                                    _ = Task.Run(async () => await PrintStageTimeToChat(player!,
+                                        steamId, playerName, dBtimerTicks, timerTicks, stage, bonusX, prevSR));
+                                });
                         }
                     }
                     else
@@ -1697,9 +1705,13 @@ namespace SharpTimer
                             Server.NextFrame(() =>
                                 Utils.LogDebug(
                                     $"Saved player {(bonusX != 0 ? $"bonus {bonusX} stage {stage} time" : $"stage {stage} time")} to database for {playerName} {timerTicks} {DateTimeOffset.UtcNow.ToUnixTimeSeconds()}"));
-                            if (IsAllowedPlayer(player) && enableStageTimes && enableStageSR)
-                                Server.NextFrame(() => _ = Task.Run(async () => await PrintStageTimeToChat(player!,
-                                    steamId, playerName, dBtimerTicks, timerTicks, stage, bonusX, prevSR)));
+                            if (enableStageTimes && enableStageSR)
+                                Server.NextFrame(() =>
+                                {
+                                    if (!IsAllowedPlayer(player)) return;
+                                    _ = Task.Run(async () => await PrintStageTimeToChat(player!,
+                                        steamId, playerName, dBtimerTicks, timerTicks, stage, bonusX, prevSR));
+                                });
                         }
                     }
                 }
@@ -1712,12 +1724,12 @@ namespace SharpTimer
             }
         }
 
-        public async Task SetPlayerStats(CCSPlayerController? player, string steamId, string playerName, int slot)
+        public async Task SetPlayerStats(CCSPlayerController? player, string steamId, string playerName, int slot, bool playerCheck)
         {
             Utils.LogDebug($"Trying to set player stats in database for {playerName}");
             try
             {
-                if (!IsAllowedPlayer(player)) return;
+                if (!playerCheck) return;
                 int timeNowUnix = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 // get player columns
                 int timesConnected = 0;

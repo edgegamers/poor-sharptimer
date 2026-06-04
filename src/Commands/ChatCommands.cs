@@ -463,7 +463,10 @@ namespace SharpTimer
                 Utils.PrintToChat(player, Localizer["printtime_shown"]);
 
             if (enableDb)
-                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot));
+            {
+                bool playerValid = IsAllowedPlayer(player);
+                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot, playerValid));
+            }
 
             Utils.LogDebug($"Hide Chat Speed set to: {playerTimers[slot].HideChatSpeed} for {playerName}");
         }
@@ -494,7 +497,10 @@ namespace SharpTimer
             Utils.LogDebug($"Hide Timer HUD set to: {playerTimers[slot].HideTimerHud} for {playerName}");
 
             if (enableDb)
-                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot));
+            {
+                bool playerValid = IsAllowedPlayer(player);
+                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot, playerValid));
+            }
         }
 
         [ConsoleCommand("css_keys", "Draws/Hides HUD Keys")]
@@ -523,7 +529,10 @@ namespace SharpTimer
             Utils.LogDebug($"Hide Timer HUD set to: {playerTimers[slot].HideKeys} for {playerName}");
 
             if (enableDb)
-                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot));
+            {
+                bool playerValid = IsAllowedPlayer(player);
+                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot, playerValid));
+            }
         }
 
         [ConsoleCommand("css_sounds", "Toggles Sounds")]
@@ -552,7 +561,10 @@ namespace SharpTimer
             Utils.LogDebug($"Timer Sounds set to: {playerTimers[slot].SoundsEnabled} for {playerName}");
 
             if (enableDb)
-                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot));
+            {
+                bool playerValid = IsAllowedPlayer(player);
+                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot, playerValid));
+            }
         }
 
         [ConsoleCommand("css_hideweapon", "Toggles the player's weapon visibility")]
@@ -568,7 +580,8 @@ namespace SharpTimer
             var steamID = player.SteamID.ToString();
 
             playerTimers[slot].HideWeapon = !playerTimers[slot].HideWeapon;
-            _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot));
+            bool playerValid = IsAllowedPlayer(player);
+            _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot, playerValid));
         }
 
         [ConsoleCommand("css_fov", "Sets the player's FOV")]
@@ -594,7 +607,10 @@ namespace SharpTimer
 
             if (noMySql == false) playerTimers[slot].PlayerFov = desiredFov;
             if (enableDb)
-                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot));
+            {
+                bool playerValid = IsAllowedPlayer(player);
+                _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot, playerValid));
+            }
         }
 
         [ConsoleCommand("css_top", "Prints top players of this map")]
@@ -1683,8 +1699,9 @@ namespace SharpTimer
             bool hidingPlayers = !playerTimers[slot].HidePlayers;
 
             playerTimers[slot].HidePlayers = hidingPlayers;
-            
-            _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot));
+
+            bool playerValid = IsAllowedPlayer(player);
+            _ = Task.Run(async () => await SetPlayerStats(player, steamID, playerName, slot, playerValid));
             
             if (hidingPlayers)
                 Utils.PrintToChat(player, $"Hide: {ChatColors.Green}Enabled");

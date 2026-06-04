@@ -65,20 +65,23 @@ namespace SharpTimer
                         playerTimers[slot].CurrentMapStage = 1;
                     else
                     {
-                        _ = Task.Run(async () => await HandlePlayerStageTimes(player, callerHandle, slot, steamID, playerName, playerTimers[slot].currentStyle, playerTimers[slot].Mode));
+                        bool playerValid = IsAllowedPlayer(player);
+                        _ = Task.Run(async () => await HandlePlayerStageTimes(player, callerHandle, slot, steamID, playerName, playerTimers[slot].currentStyle, playerTimers[slot].Mode, playerValid));
                         return HookResult.Continue;
                     }
                 }
 
                 if (useCheckpointTriggers == true && cpTriggers.ContainsKey(callerHandle) && playerTimers[slot].IsTimerBlocked == false && playerTimers[slot].IsTimerRunning == true)
                 {
-                    _ = Task.Run(async () => await HandlePlayerCheckpointTimes(player, callerHandle, slot, steamID, playerName, playerTimers[slot].currentStyle, playerTimers[slot].Mode));
+                    bool playerValid = IsAllowedPlayer(player);
+                    _ = Task.Run(async () => await HandlePlayerCheckpointTimes(player, callerHandle, slot, steamID, playerName, playerTimers[slot].currentStyle, playerTimers[slot].Mode, playerValid));
                     return HookResult.Continue;
                 }
 
                 if (useBonusCheckpointTriggers == true && bonusCheckpointTriggers.ContainsKey(callerHandle) && playerTimers[slot].IsTimerBlocked == false && playerTimers[slot].IsBonusTimerRunning == true)
                 {
-                    _ = Task.Run(async () => await HandlePlayerBonusCheckpointTimes(player, callerHandle, slot, steamID, playerName, playerTimers[slot].currentStyle, playerTimers[slot].Mode));
+                    bool playerValid = IsAllowedPlayer(player);
+                    _ = Task.Run(async () => await HandlePlayerBonusCheckpointTimes(player, callerHandle, slot, steamID, playerName, playerTimers[slot].currentStyle, playerTimers[slot].Mode, playerValid));
                     return HookResult.Continue;
                 }
 
