@@ -820,6 +820,8 @@ namespace SharpTimer
                 rankIcon = useGlobalRanks ? await GetPlayerServerPlacement(player, steamId, playerName, true) : await GetPlayerMapPlacementWithTotal(player, steamId, playerName, true, false, 0, style, false, mode);
                 mapPlacement = await GetPlayerMapPlacementWithTotal(player, steamId, playerName, false, true, 0, style, false, mode);
 
+                // Build bonus cache off-thread into a local map, publish to playerTimers on the main thread below
+                var cachedBonusInfo = new Dictionary<int, PlayerBonusPlacementInfo>();
                 foreach (var bonusRespawnPose in bonusRespawnPoses)
                 {
                     var bonusNumber = bonusRespawnPose.Key;
@@ -834,7 +836,7 @@ namespace SharpTimer
                     Utils.LogDebug($"PbTicks: {bonusPbTicks}");
                     Utils.LogDebug($"Placement: {bonusPlacement}");
 
-                    playerTimers[slot].CachedBonusInfo[bonusNumber] = new PlayerBonusPlacementInfo()
+                    cachedBonusInfo[bonusNumber] = new PlayerBonusPlacementInfo()
                     {
                         PbTicks = bonusPbTicks,
                         Placement = bonusPlacement
@@ -856,6 +858,9 @@ namespace SharpTimer
                     playerTimers[slot].CachedPB = $"{(pbTicks != 0 ? $" {Utils.FormatTime(pbTicks)}" : "")}";
                     playerTimers[slot].CachedRank = ranking;
                     playerTimers[slot].CachedMapPlacement = mapPlacement;
+
+                    foreach (var kv in cachedBonusInfo)
+                        playerTimers[slot].CachedBonusInfo[kv.Key] = kv.Value;
 
                     if (displayScoreboardTags) AddRankTagToPlayer(player!, ranking);
                 });
