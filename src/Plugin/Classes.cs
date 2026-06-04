@@ -68,7 +68,7 @@ namespace SharpTimer
     {
         public int MapID { get; set; }
         public long AddonID { get; set; }
-        public string MapName { get; set; }
+        public string MapName { get; set; } = string.Empty;
         public bool Verified { get; set; }
     }
 
@@ -366,12 +366,12 @@ namespace SharpTimer
     {
         public int record_id { get; set; }
         public int player_id { get; set; }
-        public string player_name { get; set; }
+        public string player_name { get; set; } = string.Empty;
         public int server_id { get; set; }
         public int map_id { get; set; }
         public int bonus { get; set; }
-        public string mode { get; set; }
-        public string style { get; set; }
+        public string mode { get; set; } = string.Empty;
+        public string style { get; set; } = string.Empty;
         public decimal time { get; set; }
         public DateTimeOffset created_on { get; set; }
         public bool replay { get; set; }
@@ -401,7 +401,7 @@ namespace SharpTimer
         public int record_id { get; set; }
         public int map_id { get; set; }
         public int bonus { get; set; }
-        public string mode { get; set; }
+        public string mode { get; set; } = string.Empty;
         public string? hash { get; set; }
         public string? replay_data { get; set; }
     }
@@ -409,7 +409,7 @@ namespace SharpTimer
     // PlayerPoints for MySql
     public class PlayerPoints
     {
-        public string SteamID { get; set; }
+        public string SteamID { get; set; } = string.Empty;
         public string? PlayerName { get; set; }
         public int GlobalPoints { get; set; }
         public int Placement { get; set; }

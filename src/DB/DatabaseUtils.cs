@@ -961,7 +961,7 @@ namespace SharpTimer
                                     beatPB,
                                     bonusX, style, dBtimesFinished);
                                 
-                                Server.NextFrame(() => Utils.PrintToChat(player, Localizer["gained_points",
+                                Server.NextFrame(() => Utils.PrintToChat(player!, Localizer["gained_points",
                                     playerName, Convert.ToInt32(newPts - oldPts),
                                     newPts]));
                             }
@@ -1107,7 +1107,7 @@ namespace SharpTimer
                                     beatPB,
                                     bonusX, style, dBtimesFinished);
                                 
-                                Server.NextFrame(() => Utils.PrintToChat(player, Localizer["gained_points",
+                                Server.NextFrame(() => Utils.PrintToChat(player!, Localizer["gained_points",
                                     playerName, Convert.ToInt32(newPts - oldPts),
                                     newPts]));
                             }

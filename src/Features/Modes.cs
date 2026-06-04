@@ -34,7 +34,7 @@ public partial class SharpTimer
         }
     }
 
-    private ModeConfig[] _configValues;
+    private ModeConfig[] _configValues = [];
 
     public void InitializeModeConfigs()
     {

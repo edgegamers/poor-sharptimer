@@ -273,7 +273,7 @@ namespace SharpTimer
 
             int placement = 1;
 
-            Dictionary<int, PlayerRecord> cachedSortedRecords;
+            Dictionary<int, PlayerRecord>? cachedSortedRecords;
             switch (playerTimers[player.Slot].Mode)
             {
                 case "Standard":

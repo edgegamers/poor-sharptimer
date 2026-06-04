@@ -252,7 +252,7 @@ namespace SharpTimer
 
                     foreach (var frame in indexedReplayFrames)
                     {
-                        writer.Write(frame.Frame.Position!.X);
+                        writer.Write(frame.Frame!.Position!.X);
                         writer.Write(frame.Frame.Position!.Y);
                         writer.Write(frame.Frame.Position!.Z);
                         writer.Write(frame.Frame.Rotation!.Pitch);
@@ -261,7 +261,7 @@ namespace SharpTimer
                         writer.Write(frame.Frame.Speed!.X);
                         writer.Write(frame.Frame.Speed!.Y);
                         writer.Write(frame.Frame.Speed!.Z);
-                        writer.Write((int)frame.Frame.Buttons);
+                        writer.Write((int)frame.Frame!.Buttons!);
                         writer.Write((int)frame.Frame.Flags);
                         writer.Write((int)frame.Frame.MoveType);
                     }
@@ -282,7 +282,7 @@ namespace SharpTimer
 
             foreach (var frame in frames)
             {
-                writer.Write(frame.Frame.Position!.X);
+                writer.Write(frame.Frame!.Position!.X);
                 writer.Write(frame.Frame.Position!.Y);
                 writer.Write(frame.Frame.Position!.Z);
                 writer.Write(frame.Frame.Rotation!.Pitch);
@@ -291,7 +291,7 @@ namespace SharpTimer
                 writer.Write(frame.Frame.Speed!.X);
                 writer.Write(frame.Frame.Speed!.Y);
                 writer.Write(frame.Frame.Speed!.Z);
-                writer.Write((int)frame.Frame.Buttons);
+                writer.Write((int)frame.Frame!.Buttons!);
                 writer.Write((int)frame.Frame.Flags);
                 writer.Write((int)frame.Frame.MoveType);
             }
