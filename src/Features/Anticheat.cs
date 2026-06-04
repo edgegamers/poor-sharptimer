@@ -79,7 +79,13 @@ namespace SharpTimer
                 {
                     playerTimer.YawSpikeFlagged = true;
                     StartStopRecord(player, "Unusually frequent m_yaw accel spikes (Strafe optimizer)");
-                    Server.NextFrame(async () => await DiscordACMessage(player, "Unusually frequent m_yaw accel spikes (Strafe optimizer)"));
+                    Server.NextFrame(() =>
+                    {
+                        if (player == null || !player.IsValid) return;
+                        var sid = player.SteamID.ToString();
+                        var pn = player.PlayerName;
+                        _ = Task.Run(async () => await DiscordACMessage(sid, pn, "Unusually frequent m_yaw accel spikes (Strafe optimizer)"));
+                    });
                     Utils.ConPrint($"::::BEGIN:::: Yaw Accel Spike % of Total");
                     foreach (var percent in playerTimer.YawAccelPercents)
                     {
@@ -96,7 +102,13 @@ namespace SharpTimer
                 {
                     playerTimer.PerfectStrafesFlagged = true;
                     StartStopRecord(player, "Unusually frequent perfect strafe/inputs (Autostrafe)");
-                    Server.NextFrame(async () => await DiscordACMessage(player, "Unusually frequent perfect strafe/inputs (Autostrafe)"));
+                    Server.NextFrame(() =>
+                    {
+                        if (player == null || !player.IsValid) return;
+                        var sid = player.SteamID.ToString();
+                        var pn = player.PlayerName;
+                        _ = Task.Run(async () => await DiscordACMessage(sid, pn, "Unusually frequent perfect strafe/inputs (Autostrafe)"));
+                    });
                 }
             }
             
@@ -121,7 +133,13 @@ namespace SharpTimer
             {
                 StartStopRecord(player, "Mismatched Inputs (Strafe sync/autostrafe)");
                 playerTimers[player.Slot].MismatchedInputsFlagged = true;
-                Server.NextFrame(async () => await DiscordACMessage(player, "Mismatched Inputs (Strafe sync/autostrafe)"));
+                Server.NextFrame(() =>
+                {
+                    if (player == null || !player.IsValid) return;
+                    var sid = player.SteamID.ToString();
+                    var pn = player.PlayerName;
+                    _ = Task.Run(async () => await DiscordACMessage(sid, pn, "Mismatched Inputs (Strafe sync/autostrafe)"));
+                });
             }
 
             playerTimers[player.Slot].MoveLeft.Add(moveleft);

@@ -629,9 +629,13 @@ namespace SharpTimer
 
             var mapName = command.ArgByIndex(1);
 
-            Server.NextFrame(async () =>
+            Server.NextFrame(() =>
             {
-                await PrintTopRecordsHandler(player, player.PlayerName, 0, string.IsNullOrEmpty(mapName) ? "" : mapName, playerTimers[player.Slot].currentStyle, playerTimers[player.Slot].Mode);
+                bool playerValid = IsPlayerOrSpectator(player);
+                var playerName = player.PlayerName;
+                var style = playerTimers[player.Slot].currentStyle;
+                var mode = playerTimers[player.Slot].Mode;
+                _ = Task.Run(async () => await PrintTopRecordsHandler(player, playerName, playerValid, 0, string.IsNullOrEmpty(mapName) ? "" : mapName, style, mode));
             });
         }
 
@@ -722,12 +726,19 @@ namespace SharpTimer
                 return;
             }
 
-            Server.NextFrame(async () => await PrintTopRecordsHandler(player, player.PlayerName, bonusX, "", playerTimers[player.Slot].currentStyle, playerTimers[player.Slot].Mode));
+            Server.NextFrame(() =>
+            {
+                bool playerValid = IsPlayerOrSpectator(player);
+                var playerName = player.PlayerName;
+                var style = playerTimers[player.Slot].currentStyle;
+                var mode = playerTimers[player.Slot].Mode;
+                _ = Task.Run(async () => await PrintTopRecordsHandler(player, playerName, playerValid, bonusX, "", style, mode));
+            });
         }
 
-        public async Task PrintTopRecordsHandler(CCSPlayerController? player, string playerName, int bonusX = 0, string mapName = "", int style = 0, string mode = "")
+        public async Task PrintTopRecordsHandler(CCSPlayerController? player, string playerName, bool playerCheck, int bonusX = 0, string mapName = "", int style = 0, string mode = "")
         {
-            if (!IsPlayerOrSpectator(player) || topEnabled == false)
+            if (!playerCheck || topEnabled == false) // playerCheck snapshotted on the main thread at the launch site
                 return;
 
             Utils.LogDebug($"Handling !top for {playerName}");

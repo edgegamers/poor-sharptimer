@@ -266,7 +266,7 @@ namespace SharpTimer
             }
         }
 
-        public async Task DiscordACMessage(CCSPlayerController? player, string reason)
+        public async Task DiscordACMessage(string steamId, string playerName, string reason)
         {
             try
             {
@@ -281,12 +281,12 @@ namespace SharpTimer
 
                 var fields = new List<object>();
 
-                if (discordWebhookSteamLink && !string.IsNullOrEmpty(player!.SteamID.ToString()))
+                if (discordWebhookSteamLink && !string.IsNullOrEmpty(steamId))
                 {
                     fields.Add(new
                     {
                         name = "🛈 SteamID:",
-                        value = $"[Profile](https://steamcommunity.com/profiles/{player!.SteamID})",
+                        value = $"[Profile](https://steamcommunity.com/profiles/{steamId})",
                         inline = true
                     });
                 }
@@ -325,7 +325,7 @@ namespace SharpTimer
                 {
                     { "title", "Player Flagged" },
                     { "fields", spacedFields.ToArray() },
-                    { "author", new { name = $"{player!.PlayerName}", url = $"https://steamcommunity.com/profiles/{player.SteamID}" } },
+                    { "author", new { name = $"{playerName}", url = $"https://steamcommunity.com/profiles/{steamId}" } },
                     { "footer", new { text = discordWebhookFooter, icon_url = discordWebhookPFPUrl } }
                 };
 
@@ -333,7 +333,7 @@ namespace SharpTimer
                     embed.Add("color", discordWebhookColor);
 
                 if (discordWebhookSteamAvatar)
-                    embed.Add("thumbnail", new { url = await GetAvatarLink($"https://steamcommunity.com/profiles/{player.SteamID}/?xml=1") });
+                    embed.Add("thumbnail", new { url = await GetAvatarLink($"https://steamcommunity.com/profiles/{steamId}/?xml=1") });
 
                 var payload = new
                 {

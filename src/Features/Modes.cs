@@ -87,10 +87,13 @@ public partial class SharpTimer
         playerTimers[player.Slot].Mode = GetModeName(mode);
         playerTimers[player.Slot].ChangedMode = true;
         
-        Server.NextFrame(async () =>
+        Server.NextFrame(() =>
         {
             bool playerValid = IsAllowedPlayer(player);
-            await SetPlayerStats(player, player.SteamID.ToString(), player.PlayerName, player.Slot, playerValid);
+            var steamId = player.SteamID.ToString();
+            var playerName = player.PlayerName;
+            var slot = player.Slot;
+            _ = Task.Run(async () => await SetPlayerStats(player, steamId, playerName, slot, playerValid));
         });
         playerTimers[player.Slot].RespawnPos = "";
         playerTimers[player.Slot].BonusRespawnPos = "";
