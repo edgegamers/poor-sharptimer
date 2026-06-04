@@ -41,7 +41,7 @@ public partial class SharpTimer : BasePlugin
         Capabilities.RegisterPluginCapability(StManagerCapability, () => new SharpTimerAPI_Manager());
         Capabilities.RegisterPluginCapability(StDatabaseCapability, () => new SharpTimerAPI_Database());
 
-        Utils.CheckForUpdate();
+        // Utils.CheckForUpdate(); // Not currently needed
 
         defaultServerHostname = ConVar.Find("hostname")!.StringValue;
         Server.ExecuteCommand($"execifexists SharpTimer/config.cfg");
