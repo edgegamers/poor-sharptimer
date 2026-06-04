@@ -54,8 +54,34 @@
     </Target>
 
     <Target Name="ExcludeStoreApiFiles" AfterTargets="Build">
-		<Delete Files="$(OutputPath)SharpTimer.pdb" />
 		<Delete Files="$(OutputPath)SharpTimerAPI.dll" />
 		<Delete Files="$(OutputPath)TagsAPI.dll" />
+    </Target>
+
+    <Target Name="ExcludeUnwantedAssemblies" AfterTargets="Build">
+        <ItemGroup>
+            <UnwantedAssemblies Include="$(OutputPath)Microsoft.Extensions.*" />
+            <UnwantedAssemblies Include="$(OutputPath)Microsoft.DotNet.*" />
+            <UnwantedAssemblies Include="$(OutputPath)System.*" />
+            <UnwantedAssemblies Include="$(OutputPath)Serilog*" />
+            <UnwantedAssemblies Include="$(OutputPath)TagsApi.dll" />
+            <UnwantedAssemblies Include="$(OutputPath)FastGenericNew.dll" />
+            <UnwantedAssemblies Include="$(OutputPath)McMaster.NETCore.Plugins.dll" />
+            <UnwantedAssemblies Include="$(OutputPath)Tomlyn.dll" />
+            <UnwantedAssemblies Include="$(OutputPath)Scrutor.dll" />
+        </ItemGroup>
+        <Delete Files="@(UnwantedAssemblies)" />
+    </Target>
+
+    <Target Name="FlattenNativeSqlite" AfterTargets="Build">
+        <Copy SourceFiles="$(OutputPath)runtimes\linux-x64\native\libe_sqlite3.so"
+              DestinationFolder="$(OutputPath)"
+              SkipUnchangedFiles="true"
+              Condition="Exists('$(OutputPath)runtimes\linux-x64\native\libe_sqlite3.so')" />
+        <Copy SourceFiles="$(OutputPath)runtimes\win-x64\native\e_sqlite3.dll"
+              DestinationFolder="$(OutputPath)"
+              SkipUnchangedFiles="true"
+              Condition="Exists('$(OutputPath)runtimes\win-x64\native\e_sqlite3.dll')" />
+        <RemoveDir Directories="$(OutputPath)runtimes" />
     </Target>
 </Project>
