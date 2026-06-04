@@ -1,14 +1,8 @@
-<a name="readme-top"></a>
-<div align="center">
-	
-![GitHub Repo stars](https://img.shields.io/github/stars/Letaryat/poor-sharptimer?style=for-the-badge)
-![GitHub all releases](https://img.shields.io/github/downloads/Letaryat/poor-sharptimer/total?style=for-the-badge)
-</div>
+# SharpTimer
+SharpTimer is a CS2 Timer plugin for Surf/Bhop/MG/Deathrun using CounterStrikeSharp<br>
 
 > [!NOTE]
-> The original creator of SharpTimer is [Dea](https://github.com/girlglock), who discontinued support for the project after version 0.2.6. This fork is now maintaned by the community, mainly [rcnoob](https://github.com/rcnoob).
-
-
+> The original creator of SharpTimer is dea_bb, who discontinued support for the project after version 0.2.6. This fork is now occassionaly maintaned by the community.
 
 ## **Join Our Discord For Support**
 
@@ -17,15 +11,6 @@
 <div align="center">
   <img src="https://files.catbox.moe/qvawnf.png" alt="" style="margin: 0;">
 </div>
-<p align="center">
-	<br>
-	<a href="https://ko-fi.com/rcnoob"><img width="185" src="https://files.catbox.moe/rig9aq.svg" alt="Badge"></a>
-</p>
-
-
-# SharpTimer
-SharpTimer is a "simple" Surf/KZ/Bhop/MG/Deathrun/etc. CS2 Timer plugin using CounterStrikeSharp<br>
-
 
 ## Features
 <details> 
@@ -49,10 +34,6 @@ SharpTimer is a "simple" Surf/KZ/Bhop/MG/Deathrun/etc. CS2 Timer plugin using Co
 
 <details> 
   <summary>Discord Webhook</summary>
-</details>
-
-<details> 
-  <summary>JumpStats</summary>
 </details>
 
 <details> 
@@ -82,7 +63,7 @@ SharpTimer is a "simple" Surf/KZ/Bhop/MG/Deathrun/etc. CS2 Timer plugin using Co
 </details>
 
 <details> 
-  <summary>KZ Checkpoint system (disabled by default, check config)</summary>
+  <summary>Checkpoint system (disabled by default, check config)</summary>
    <img src="https://i.imgur.com/USX5i8C.png"><br>
    <img src="https://i.imgur.com/kWiHOlz.png"><br>
    <img src="https://i.imgur.com/lXwXNN7.png"><br>
@@ -95,21 +76,16 @@ SharpTimer is a "simple" Surf/KZ/Bhop/MG/Deathrun/etc. CS2 Timer plugin using Co
 
 [**MetaMod**](https://cs2.poggu.me/metamod/installation/)
 
-[**CounterStrikeSharp** *(v281 and up)*](https://github.com/roflmuffin/CounterStrikeSharp/releases)
+[**CounterStrikeSharp** *(v369 and up)*](https://github.com/roflmuffin/CounterStrikeSharp/releases)
 
-[**SharpTimerModelSetter** *(optional but recommended for custom player models)*](https://github.com/johandrevwyk/STCustomModels)
+[**cs2-tags** *(required)*](https://github.com/CounterStrike2-Plugins-Archive/cs2-tags)
 
 [**MovementUnlocker** *(optional but recommended for surf and bhop servers)*](https://github.com/Source2ZE/MovementUnlocker)
 
 [**RampBugFix** *(optional but recommended for surf servers)*](https://github.com/Interesting-exe/CS2Fixes-RampbugFix/)
 
-[**Web panel** *(optional but recommended)*](https://github.com/Letaryat/sharptimer-web-panel)
+[**STFixes** *(optional but recommended)*](https://github.com/SharpTimer/STFixes-metamod)
 
-[**CS2-TeleportAnglesFix** *(optional but recommended)*](https://github.com/M-archand/CS2-TeleportAnglesFix)
-
-[**STFixes** *(optional but recommended)*](https://github.com/rcnoob/STFixes)
-
-[**Flashing HUD Fix** *(optional but recommended)*](https://github.com/M-archand/CS2FlashingHtmlHudFix)
 
 [**SharpTimer-WallLists** *(optional)*](https://github.com/SharpTimer/WallLists)
 
@@ -125,66 +101,14 @@ SharpTimer is a "simple" Surf/KZ/Bhop/MG/Deathrun/etc. CS2 Timer plugin using Co
 
 * :exclamation: It is recommended to have a custom server cfg with your desired settings (for example [SURF](https://github.com/rcnoob/cs-cfg/blob/main/surf.cfg) or [BHOP](https://github.com/rcnoob/cs-cfg/blob/main/bhop.cfg)),
 
-# [SharpTimer Wiki/Docs](https://github.com/Letaryat/poor-sharptimer/wiki)
 
-# TODO List
-- [x] HUD
-  - [x] Speedometer
-  - [x] Pre
-  - [x] Timer
-  - [x] Info
-    - [x] PB
-    - [x] Map Rank Icon
-    - [x] Map Rank (ie 1/100)
-    - [x] Map Tier
-    - [x] Map Type
-  - [x] Spectator HUD
-- [x] Zones
-  - [x] Hook common triggers by default
-  - [x] Manual Zones
-  - [x] Hook Bonus Zones Triggers (KZ & Surf) 
-- [x] Player PBs
-  - [x] Save to Json
-  - [x] Save to MySQL
-- [x] Ranks
-  - [x] Map !top
-  - [x] Map !topbonus
-  - [x] Global server ranks
-    - [x] !points
-    - [x] Global Point system
-- [ ] Surf Stages/Checkpoint support
-  - [x] Stage/Checkpoint PBs with u/s
-    - [x] Json Stage/Checkpoint PBs saving
-    - [ ] MySql Stage/Checkpoint PBs saving
-- [x] MySQL
-	- [x] Basic Player Records
-  - [x] Player Server Stats
-  - [x] Player Map Stats
-- [x] Replays
-- [x] Jumpstats
-  - [x] Distance
-  - [x] Pre
-  - [x] Max
-  - [x] Height
-  - [x] Width
-  - [ ] Sync
-  - [ ] Jump Types
-    - [x] Long Jump
-    - [x] BunnyHop
-    - [x] MultiBunnyHop
-    - [x] Jump Bug
-    - [ ] Edge Bug
-    - [ ] Ladder Jump
-- [X] Silly Stuff
-  - [x] Color customization
-  - [x] Special Tester Gifs
-  - [x] Custom Player Gifs
-  - [x] Dioscord Webhook
-  - [X] Strafe Sync Bar on HUD
 
 ## Authors:
-[Deana](https://twitter.com/girlglock)
-[Letaryat](https://github.com/Letaryat)
-[rcnoob](https://github.com/rcnoob)
+Original creator: [DEA](https://github.com/girlglock)
 
-<p align="right">(<a href="#readme-top"> back to top </a>)</p>
+Current maintainer:
+[Marchand](https://github.com/M-archand)
+
+Previous maintainers:
+[rcnoob](https://github.com/rcnoob)
+[exkludera](https://github.com/exkludera)

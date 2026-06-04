@@ -1,4 +1,5 @@
 {
+  // Polish
   "prefix": "{lime}SharpTimer ●{white}",
 
   //timer
@@ -15,6 +16,8 @@
   "no_records_available_bonus": "Brak dostepnych rekordow dla bonusu {0} na {1}",
   "records_map": "#{0}: {lime}{1} {default}- {2} {lime}{3}",
   "new_server_record": "{lime}{0} {white}ustanowil nowy SR!",
+  "new_stage_server_record": "{lime}{0} {white}ustanowił nowy rekord sceniczny!",
+  "new_cp_server_record": "{lime}{0} {white}ustanowił nowy rekord punktu kontrolnego!",
   "new_server_record_bonus": "{lime}{0} {white}ustanowil nowy Bonus {1} SR!",
   "new_pb_record": "{lime}{0} {white}ustanowil nowy PB mapy!",
   "new_pb_record_bonus": "{lime}{0} {white}ustanowil nowy Bonus {1} PB!",
@@ -60,8 +63,6 @@
   "hud_hidden": "Hud zostal: {red}Ukryte",
   "keys_shown": "Klawisze sa teraz: {green}Pokazane",
   "keys_hidden": "Klawisze sa teraz: {red}Ukryte",
-  "jumpstats_shown": "Statystyki skokow zostaly: {green}Pokazane",
-  "jumpstats_hidden": "Statystyki skokow zostaly: {red}Ukryte",
   "sounds_on": "Dzwieki zostaly: {green}Wlaczone",
   "sounds_off": "Dzwieki zostaly: {red}Wylaczone",
 
@@ -94,10 +95,6 @@
   "goto_player": "Przeniesiono do {lime}{0}",
   "goto_player_not_found": "{lightred}Gracz pod dana nazwa nie zostal znaleziony. Jezeli nazwa posiada spacje sprobuj uzyc: {lime}!goto 'some name'",
 
-  //jumpstats
-  "js_msg1": "{lime}JS: {grey} {0}: {1}{2}{grey} | Pre: {lime}{3}{grey} | Max: {lime}{4}{grey} | Strafes: {lime}{5}",
-  "js_msg2": "{grey}Height: {lime}{0}{grey} | Width: {lime}{1}{grey} | WT: {lime}{2}{grey} | Sync: {lime}{3}%",
-
   //other
   "command_cooldown": "Odczekaj zanim ponownie skorzystasz z komendy!",
   "error_occured": "{lightred}Wystapil blad.",
@@ -107,5 +104,45 @@
   "connect_message": "Gracz {red}{0} {default}połączony!",
   "connected_message": "Gracz {red}{0} {default}połączył się {1} raz!",
   "connected_message_first": "Gracz {red}{0} {default}połączył się po raz pierwszy!",
-  "disconnect_message": "Gracz {red}{0} {default}rozłączył się!"
+  "disconnect_message": "Gracz {red}{0} {default}rozłączył się!",
+  "afk_message": "{red}Za chwilę zostaniesz przeniesiony do AFK!",
+  "start_speed": "Prędkość startowa:",
+  
+  // Error
+  "error_savingtime": "Błąd zapisywania czasu: Czas gracza wynosi 0 ticks",
+  "error_stagenotmatchfinalone": "Błąd zapisywania czasu: Aktualny etap gracza nie pasuje do ostatniego",
+  "error_checkpointnotmatchfinalone": "Błąd zapisywania czasu: Aktualny punkt kontrolny gracza nie pasuje do ostatniego {0}",
+
+  // help console Localizer
+  "Check_console": "Sprawdź swoją konsolę, aby zobaczyć listę dostępnych komend!",
+  "console_r": "• !r (css_r) - Respawn gracza",
+  "console_rb": "• !rb <#> / !b <#> (css_rb / css_b) - Respawn gracza do bonusu",
+  "console_setresp": "• !setresp / !startpos (css_setresp / css_startpos) - Zapisz niestandardowy punkt respawn w obrębie startowego triggera",
+  "console_top": "• !top (css_top) - Wyświetla 10 najlepszych rekordów na tej mapie",
+  "console_topbonus": "• !topbonus <#> (css_topbonus) - Wyświetla 10 najlepszych rekordów bonusowych",
+  "console_rank": "• !rank (css_rank) - Wyświetla aktualną rangę i rekord PB",
+  "console_ranks": "• !ranks (css_ranks) - Wyświetla listę rang serwera",
+  "console_points": "• !points (css_points) - Wyświetla 10 najlepszych punktów",
+  "console_goto": "• !goto <name> (css_goto) - Teleportuje cię do gracza",
+  "console_stage": "• !stage <#> (css_stage) - Teleportuje cię na scenę",
+  "console_sounds": "• !sounds (css_sounds) - Przełącza dźwięki timera!",
+  "console_hud": "• !hud (css_hud) - Przełącza HUD timera!",
+  "console_keys": "• !keys (css_keys) - Przełącza klawisze HUD!",
+  "console_fov": "• !fov <0-140> (css_fov) - Zmień pole widzenia!",
+  "console_saveloc": "• !saveloc (css_saveloc) - Zapisuje lokalizację",
+  "console_loadloc": "• !loadloc (css_loadloc) - Teleportuje cię do ostatniej lokalizacji",
+  "console_prevloc": "• !prevloc (css_prevloc) - Teleportuje cię do poprzedniej lokalizacji",
+  "console_nextloc": "• !nextloc (css_nextloc) - Teleportuje cię do następnej lokalizacji",
+  "console_cp": "• !cp (css_cp) - Ustawia punkt kontrolny",
+  "console_tp": "• !tp (css_tp) - Teleportuje cię do ostatniego punktu kontrolnego",
+  "console_prevcp": "• !prevcp (css_prevcp) - Teleportuje cię do poprzedniego punktu kontrolnego",
+  "console_nextcp": "• !nextcp (css_nextcp) - Teleportuje cię do następnego punktu kontrolnego",
+  "console_replay": "• !replay / !replaysr (css_replay / css_replaysr) - Odtwarza rekord serwera na aktualnej mapie",
+  "console_replaytop": "• !replaytop [1-10] (css_replaytop) - Odtwarza jeden z 10 najlepszych rekordów serwera",
+  "console_replaypb": "• !replaypb (css_replaypb) - Odtwarza twój PB na aktualnej mapie",
+  "console_replaybonus": "• !replaybonus / !replayb [1-10] [bonus stage] (css_replaybonus) - Odtwarza jeden z 10 najlepszych rekordów bonusowych",
+  "console_replaybonuspb": "• !replaybonuspb / !replaybpb (css_replaybonuspb) - Odtwarza twój PB na bonusie",
+  "console_hideweapon": "• !hideweapon (css_hideweapon) - Przełącza widoczność broni",
+  "console_spec": "• !spec (css_spec) - Przenosi cię do widza lub z powrotem do drużyny",
+  "console_styles": "• !styles (css_styles) - Wyświetla wszystkie style"
 }

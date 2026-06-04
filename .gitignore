@@ -3,3 +3,9 @@ CounterStrikeSharp.API.dll
 **/bin
 .vscode/
 .vs/
+/.idea
+/src/SharpTimer.csproj.user
+/src/Properties/PublishProfiles/FolderProfile.pubxml
+/src/Properties/PublishProfiles/FolderProfile.pubxml.user
+/Build
+SharpTimer-main.sln.DotSettings.user

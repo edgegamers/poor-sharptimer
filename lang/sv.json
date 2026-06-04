@@ -1,4 +1,5 @@
 {
+  // Swedish
   "prefix": "{lime}SharpTimer ●{white}",
 
   //timer
@@ -15,6 +16,8 @@
   "no_records_available_bonus": "Inga rekord tillgängliga för Bonus {0} på {1}",
   "records_map": "#{0}: {lime}{1} {default}- {2} {lime}{3}",
   "new_server_record": "{lime}{0} {white}tog ett nytt SR!",
+  "new_stage_server_record": "{lime}{0} {white}satte ett nytt etapprekord!",
+  "new_cp_server_record": "{lime}{0} {white}satte ett nytt kontrollpunktsrekord!",
   "new_server_record_bonus": "{lime}{0} {white}tog ett nytt Bonus {1} SR!",
   "new_pb_record": "{lime}{0} {white}tog ett nytt Map PB!",
   "new_pb_record_bonus": "{lime}{0} {white}tog ett nytt Bonus {1} PB!",
@@ -60,8 +63,6 @@
   "hud_hidden": "HUD är nu: {red}Gömd",
   "keys_shown": "Tangenter är nu: {green}Synliga",
   "keys_hidden": "Tangenter är nu: {red}Gömda",
-  "jumpstats_shown": "Jump Stats är nu: {green}Synliga",
-  "jumpstats_hidden": "Jump Stats är nu: {red}Gömda",
   "sounds_on": "Ljud är nu: {green}PÅ",
   "sounds_off": "Ljud är nu: {red}AV",
 
@@ -94,10 +95,6 @@
   "goto_player": "Teleporterar till {lime}{0}",
   "goto_player_not_found": "{lightred}Namnet på spelaren hittades inte! Om namnet innehåller mellanslag, försök {lime}!goto 'spelarens namn'",
 
-  //jumpstats
-  "js_msg1": "{lime}JS: {grey} {0}: {1}{2}{grey} | Pre: {lime}{3}{grey} | Max: {lime}{4}{grey} | Strafes: {lime}{5}",
-  "js_msg2": "{grey}Height: {lime}{0}{grey} | Width: {lime}{1}{grey} | WT: {lime}{2}{grey} | Sync: {lime}{3}%",
-
   //other
   "command_cooldown": "Command är på cooldown. Chilla...",
   "error_occured": "{lightred}Fel uppstod.",
@@ -107,5 +104,46 @@
   "connect_message": "Spelare {red}{0} {default}ansluten!",
   "connected_message": "Spelare {red}{0} {default}ansluten för den {1} gången!",
   "connected_message_first": "Spleare {red}{0} {default}ansluten för första gången!",
-  "disconnect_message": "Spelare {red}{0} {default}lämnade!"
+  "disconnect_message": "Spelare {red}{0} {default}lämnade!",
+
+  "afk_message": "{red}Du är på väg att flyttas till AFK!",
+  "start_speed": "Startfart:",
+
+  //Error
+  "error_savingtime": "Error Saving Time: Spelartiden är 0 tick",
+  "error_stagenotmatchfinalone": "Error Saving Time: Spelarens nuvarande stadium matchar inte det sista",
+  "error_checkpointnotmatchfinalone": "Error Saving Time: Spelarens aktuella checkpoint matchar inte den sista{0}",
+
+  //help console Localizer
+  "Check_console": "Kolla din konsol för en lista över tillgängliga kommandon!",
+  "console_r": "• !r (css_r) - Respawnar dig",
+  "console_rb": "• !rb <#> / !b <#> (css_rb / css_b) - Respawnar dig till en bonus",
+  "console_setresp": "• !setresp / !startpos (css_setresp / css_startpos) - Spara en custom respawn plats inom start triggern",
+  "console_top": "• !top (css_top) - Listar topp 10 rekord på denna karta",
+  "console_topbonus": "• !topbonus <#> (css_topbonus) - Listar topp 10 rekord på en bonus",
+  "console_rank": "• !rank (css_rank) - Visar din nuvarande rank och pb",
+  "console_ranks": "• !ranks (css_ranks) - Visar en lista över serverrankningarna",
+  "console_points": "• !points (css_points) - Visa topp 10 poäng",
+  "console_goto": "• !goto <name> (css_goto) - Teleporterar dig till en spelare",
+  "console_stage": "• !stage <#> (css_stage) - Teleporterar dig till en stage",
+  "console_sounds": "• !sounds (css_sounds) - Toggla timer ljud!",
+  "console_hud": "• !hud (css_hud) - Toggla timer hud!",
+  "console_keys": "• !keys (css_keys) - Toggla hud keys!",
+  "console_fov": "• !fov <0-140> (css_fov) - Ändra din field of view!",
+  "console_saveloc": "• !saveloc (css_saveloc) - Spara en Loc",
+  "console_loadloc": "• !loadloc (css_loadloc) - Teleporterar dig till det sista Loc",
+  "console_prevloc": "• !prevloc (css_prevloc) - Teleporterar dig en Loc tillbaka",
+  "console_nextloc": "• !nextloc (css_nextloc) - Teleporterar dig en Loc framåt",
+  "console_cp": "• !cp (css_cp) - Sätter en Checkpoint",
+  "console_tp": "• !tp (css_tp) - Teleporterar dig till din sista Checkpoint",
+  "console_prevcp": "• !prevcp (css_prevcp) - Teleporterar dig en Checkpoint bak",
+  "console_nextcp": "• !nextcp (css_nextcp) - Teleporterar dig en Checkpoint fram",
+  "console_replay": "• !replay / !replaysr (css_replay / css_replaysr) - Spela upp nuvarande kartas server rekord",
+  "console_replaytop": "• !replaytop [1-10] (css_replaytop) - Spela upp en topp 10 server karta rekord",
+  "console_replaypb": "• !replaypb (css_replaypb) - Spela om din pb för den aktuella kartan",
+  "console_replaybonus": "• !replaybonus / !replayb [1-10] [bonus stage] (css_replaybonus) - Spela om ett topp 10-serverbonusrekord",
+  "console_replaybonuspb": "• !replaybonuspb / !replaybpb (css_replaybonuspb) - Spela om din pb för en bonus",
+  "console_hideweapon": "• !hideweapon (css_hideweapon) - Toggla vapnets synlighet",
+  "console_spec": "• !spec (css_spec) - Flyttar dig till Spectator eller tillbaka till ett lag",
+  "console_styles": "• !styles (css_styles) - Lista alla styles"
 }
