@@ -438,11 +438,25 @@ public partial class SharpTimer : BasePlugin
 
         if (apiKey != "")
         {
-            Server.NextFrame(async () =>
+            Server.NextFrame(() =>
             {
-                await UpdatePlayerAsync((long)player.SteamID, player.PlayerName);
-                int playerId = await GetPlayerIDAsync((long)player.SteamID);
-                CachePlayerID(player, playerId);
+                if (player == null || !player.IsValid) return;
+                long steamId = (long)player.SteamID;
+                string playerName = player.PlayerName;
+                int slot = player.Slot;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await UpdatePlayerAsync(steamId, playerName);
+                        int playerId = await GetPlayerIDAsync(steamId);
+                        Server.NextFrame(() => { if (!globalDisabled) playerCache.PlayerID[slot] = playerId; });
+                    }
+                    catch (Exception ex)
+                    {
+                        Server.NextFrame(() => Utils.LogError($"Error caching global player ID: {ex.Message}"));
+                    }
+                });
             });
         }
 

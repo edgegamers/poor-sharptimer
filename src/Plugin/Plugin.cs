@@ -105,24 +105,33 @@ public partial class SharpTimer
                 if (!validPlugins || !validCvars)
                     globalDisabled = true;
                 
-                Server.NextFrame(async () =>
+                Server.NextFrame(() =>
                 {
-                    validKey = await CheckKeyAsync();
-                    validHash = await CheckHashAsync();
-                    long addonID = await GetAddonID(mapName);
-
-                    int mapId = await GetMapIDAsync(addonID);
-                    await CacheMapData(mapId, addonID, mapName);
-                    await CacheWorldRecords(true);
-                    await CacheGlobalPoints(true);
-
-                    int serverId = await GetServerIDAsync(ip, port);
-                    CacheServerID(serverId);
-                    if (serverId == 0)
+                    _ = Task.Run(async () =>
                     {
-                        // ip and port do not match what we have in the global db
-                        globalDisabled = true;
-                    }
+                        try
+                        {
+                            validKey = await CheckKeyAsync();
+                            validHash = await CheckHashAsync();
+                            long addonID = await GetAddonID(mapName);
+
+                            int mapId = await GetMapIDAsync(addonID);
+                            await CacheMapData(mapId, addonID, mapName);
+                            await CacheWorldRecords(true);
+                            await CacheGlobalPoints(true);
+
+                            int serverId = await GetServerIDAsync(ip, port);
+                            CacheServerID(serverId);
+                            if (serverId == 0)
+                            {
+                                Server.NextFrame(() => globalDisabled = true);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Server.NextFrame(() => Utils.LogError($"Error in global API init: {ex.Message}"));
+                        }
+                    });
                 });
 
                 if (Directory.Exists($"{gameDir}/csgo/addons/StripperCS2/maps/{Server.MapName}"))
