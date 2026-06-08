@@ -1,5 +1,7 @@
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using Vector = CounterStrikeSharp.API.Modules.Utils.Vector;
+using CounterStrikeSharp.API.Modules.Memory;
+using FixVectorLeak;
 
 namespace SharpTimer
 {
@@ -7,6 +9,8 @@ namespace SharpTimer
     {
         public void setStyle(CCSPlayerController player, int style)
         {
+            playerTimers[player.Slot].RespawnPos = "";
+            playerTimers[player.Slot].BonusRespawnPos = "";
             AddTimer(0.1f, () =>
             {
                 SetNormalStyle(player);
@@ -61,19 +65,19 @@ namespace SharpTimer
         {
             playerTimers[player.Slot].currentStyle = 0; // reset currentStyle
             playerTimers[player.Slot].changedStyle = true;
-            player!.Pawn.Value!.GravityScale = 1f;
+            Schema.SetSchemaValue(player!.Pawn.Value!.Handle, "CBaseEntity", "m_flActualGravityScale", 1f);
         }
 
         public void SetLowGravity(CCSPlayerController player)
         {
             playerTimers[player.Slot].currentStyle = 1; // 1 = low-gravity
-            player!.Pawn.Value!.GravityScale = 0.5f;
+            Schema.SetSchemaValue(player!.Pawn.Value!.Handle, "CBaseEntity", "m_flActualGravityScale", 0.5f);
             playerTimers[player.Slot].changedStyle = true;
         }
         public void SetHighGravity(CCSPlayerController player)
         {
             playerTimers[player.Slot].currentStyle = 5; // 5 = high-gravity
-            player!.Pawn.Value!.GravityScale = 1.5f;
+            Schema.SetSchemaValue(player!.Pawn.Value!.Handle, "CBaseEntity", "m_flActualGravityScale", 1.5f);
             playerTimers[player.Slot].changedStyle = true;
         }
         public void SetSlowMo(CCSPlayerController player)
@@ -138,7 +142,7 @@ namespace SharpTimer
             playerTimers[player.Slot].changedStyle = true;
         }
 
-        public void SetVelocity(CCSPlayerController player, Vector currentVel, int desiredVel)
+        public void SetVelocity(CCSPlayerController player, Vector_t currentVel, int desiredVel)
         {
             if(currentVel.X > desiredVel) player!.PlayerPawn.Value!.AbsVelocity.X = desiredVel;
             if(currentVel.X < -desiredVel) player!.PlayerPawn.Value!.AbsVelocity.X = -desiredVel;

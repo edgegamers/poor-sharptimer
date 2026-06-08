@@ -13,29 +13,75 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-using System.Globalization;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
-
+using System.Globalization;
+using System.Reflection;
 
 namespace SharpTimer
 {
     public partial class SharpTimer
     {
-        //Because decimals are weird
-        private CultureInfo culture;
+        private void CheckMissingFakeConvars()
+        {
+            try
+            {
+                var cfgPath = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "config.cfg");
 
-        public SharpTimer() {
-            try {
-                culture = CultureInfo.CreateSpecificCulture("en-US");
-            } catch (CultureNotFoundException e) {
-                Console.WriteLine("Culture not found, using invariant culture.");
-                culture = CultureInfo.InvariantCulture;
+                if (!File.Exists(cfgPath))
+                    return;
+
+                // Check existing fake convars in config
+                var present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var raw in File.ReadLines(cfgPath))
+                {
+                    var line = raw.Trim();
+                    if (string.IsNullOrEmpty(line)) continue;
+                    if (line.StartsWith("//")) continue;
+
+                    int i = 0;
+                    while (i < line.Length && !char.IsWhiteSpace(line[i])) i++;
+                    if (i == 0) continue;
+
+                    var token = line[..i];
+                    if (token.StartsWith("sharptimer_", StringComparison.OrdinalIgnoreCase))
+                        present.Add(token);
+                }
+
+                // Check expected fake convars
+                var expected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var methods = typeof(SharpTimer).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+                foreach (var m in methods)
+                {
+                    foreach (var cad in m.GetCustomAttributesData())
+                    {
+                        if (cad.AttributeType.Name == "ConsoleCommandAttribute" && cad.ConstructorArguments.Count >= 1)
+                        {
+                            var arg0 = cad.ConstructorArguments[0].Value;
+                            if (arg0 is string commandName && commandName.StartsWith("sharptimer_", StringComparison.OrdinalIgnoreCase))
+                                expected.Add(commandName);
+                        }
+                    }
+                }
+
+                var missing = expected.Except(present).OrderBy(x => x).ToList();
+
+                if (missing.Count > 0)
+                {
+                    Utils.LogError($"[CVAR] {missing.Count} fake convar(s) are missing in cfg/SharpTimer/config.cfg:");
+                    foreach (var name in missing)
+                        Utils.LogError($"[CVAR] Missing -> {name} (Falling back to default)");
+                }
+            }
+            catch (Exception ex)
+            {
+                Utils.LogError($"Error in CheckMissingFakeConvars: {ex.Message}");
             }
         }
-        
+
         [ConsoleCommand("sharptimer_hostname", "Default Server Hostname.")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
         public void SharpTimerServerHostname(CCSPlayerController? player, CommandInfo command)
@@ -60,7 +106,7 @@ namespace SharpTimer
             autosetHostname = bool.TryParse(args, out bool autosetHostnameValue) ? autosetHostnameValue : args != "0" && autosetHostname;
         }
 
-        [ConsoleCommand("sharptimer_custom_map_cfgs_enabled", "Whether Custom Map .cfg files should be executed for the corresponding maps (found in cfg/SharpTimer/MapData/MapExecs/kz_example.cfg). Default value: true")]
+        [ConsoleCommand("sharptimer_custom_map_cfgs_enabled", "Whether Custom Map .cfg files should be executed for the corresponding maps (found in cfg/SharpTimer/MapData/MapExecs/de_example.cfg). Default value: true")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
         public void SharpTimerCustomMapExecConvar(CCSPlayerController? player, CommandInfo command)
         {
@@ -105,11 +151,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int minPoints) && minPoints > 0)
             {
                 minGlobalPointsForRank = minPoints;
-                SharpTimerConPrint($"SharpTimer min points for rank set to {minPoints} points.");
+                Utils.LogDebug($"SharpTimer min points for rank set to {minPoints} points.");
             }
             else
             {
-                SharpTimerConPrint("Invalid min points for rank value. Please provide a positive integer.");
+                Utils.LogError("Invalid min points for rank value. Please provide a positive integer.");
             }
         }
 
@@ -119,14 +165,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 globalPointsBonusMultiplier = multiplier;
-                SharpTimerConPrint($"SharpTimer bonus points multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer bonus points multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid bonus points multiplier. Please provide a positive integer.");
+                Utils.LogError("Invalid bonus points multiplier. Please provide a positive integer.");
             }
         }
 
@@ -139,11 +185,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int baseline) && baseline > 0)
             {
                 baselineT1 = baseline;
-                SharpTimerConPrint($"SharpTimer baseline T1 points set to {baseline}");
+                Utils.LogDebug($"SharpTimer baseline T1 points set to {baseline}");
             }
             else
             {
-                SharpTimerConPrint("Invalid baseline T1 points. Please provide a positive integer.");
+                Utils.LogError("Invalid baseline T1 points. Please provide a positive integer.");
             }
         }
 
@@ -156,11 +202,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int baseline) && baseline > 0)
             {
                 baselineT2 = baseline;
-                SharpTimerConPrint($"SharpTimer baseline T2 points set to {baseline}");
+                Utils.LogDebug($"SharpTimer baseline T2 points set to {baseline}");
             }
             else
             {
-                SharpTimerConPrint("Invalid baseline T2 points. Please provide a positive integer.");
+                Utils.LogError("Invalid baseline T2 points. Please provide a positive integer.");
             }
         }
 
@@ -173,11 +219,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int baseline) && baseline > 0)
             {
                 baselineT3 = baseline;
-                SharpTimerConPrint($"SharpTimer baseline T3 points set to {baseline}");
+                Utils.LogDebug($"SharpTimer baseline T3 points set to {baseline}");
             }
             else
             {
-                SharpTimerConPrint("Invalid baseline T3 points. Please provide a positive integer.");
+                Utils.LogError("Invalid baseline T3 points. Please provide a positive integer.");
             }
         }
 
@@ -190,11 +236,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int baseline) && baseline > 0)
             {
                 baselineT4 = baseline;
-                SharpTimerConPrint($"SharpTimer baseline T4 points set to {baseline}");
+                Utils.LogDebug($"SharpTimer baseline T4 points set to {baseline}");
             }
             else
             {
-                SharpTimerConPrint("Invalid baseline T4 points. Please provide a positive integer.");
+                Utils.LogError("Invalid baseline T4 points. Please provide a positive integer.");
             }
         }
 
@@ -207,11 +253,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int baseline) && baseline > 0)
             {
                 baselineT5 = baseline;
-                SharpTimerConPrint($"SharpTimer baseline T5 points set to {baseline}");
+                Utils.LogDebug($"SharpTimer baseline T5 points set to {baseline}");
             }
             else
             {
-                SharpTimerConPrint("Invalid baseline T5 points. Please provide a positive integer.");
+                Utils.LogError("Invalid baseline T5 points. Please provide a positive integer.");
             }
         }
 
@@ -224,11 +270,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int baseline) && baseline > 0)
             {
                 baselineT6 = baseline;
-                SharpTimerConPrint($"SharpTimer baseline T6 points set to {baseline}");
+                Utils.LogDebug($"SharpTimer baseline T6 points set to {baseline}");
             }
             else
             {
-                SharpTimerConPrint("Invalid baseline T6 points. Please provide a positive integer.");
+                Utils.LogError("Invalid baseline T6 points. Please provide a positive integer.");
             }
         }
 
@@ -241,11 +287,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int baseline) && baseline > 0)
             {
                 baselineT7 = baseline;
-                SharpTimerConPrint($"SharpTimer baseline T7 points set to {baseline}");
+                Utils.LogDebug($"SharpTimer baseline T7 points set to {baseline}");
             }
             else
             {
-                SharpTimerConPrint("Invalid baseline T7 points. Please provide a positive integer.");
+                Utils.LogError("Invalid baseline T7 points. Please provide a positive integer.");
             }
         }
 
@@ -258,11 +304,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int baseline) && baseline > 0)
             {
                 baselineT8 = baseline;
-                SharpTimerConPrint($"SharpTimer baseline T8 points set to {baseline}");
+                Utils.LogDebug($"SharpTimer baseline T8 points set to {baseline}");
             }
             else
             {
-                SharpTimerConPrint("Invalid baseline T8 points. Please provide a positive integer.");
+                Utils.LogError("Invalid baseline T8 points. Please provide a positive integer.");
             }
         }
 
@@ -275,11 +321,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int baseline) && baseline > 0)
             {
                 maxRecordPointsBase = baseline;
-                SharpTimerConPrint($"SharpTimer max record points set to {baseline}");
+                Utils.LogDebug($"SharpTimer max record points set to {baseline}");
             }
             else
             {
-                SharpTimerConPrint("Invalid max record points. Please provide a positive integer.");
+                Utils.LogError("Invalid max record points. Please provide a positive integer.");
             }
         }
 
@@ -292,11 +338,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int completions) && completions >= 0)
             {
                 globalPointsMaxCompletions = completions;
-                SharpTimerConPrint($"SharpTimer max completions set to {completions}");
+                Utils.LogDebug($"SharpTimer max completions set to {completions}");
             }
             else
             {
-                SharpTimerConPrint("Invalid max completions. Please provide a positive integer.");
+                Utils.LogError("Invalid max completions. Please provide a positive integer.");
             }
         }
 
@@ -306,14 +352,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_1 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_1 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_1 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_1 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_1 multiplier. Please provide a positive double.");
             }
         }
 
@@ -323,14 +369,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_2 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_2 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_2 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_2 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_2 multiplier. Please provide a positive double.");
             }
         }
 
@@ -340,14 +386,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_3 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_3 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_3 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_3 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_3 multiplier. Please provide a positive double.");
             }
         }
 
@@ -357,14 +403,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_4 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_4 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_4 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_4 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_4 multiplier. Please provide a positive double.");
             }
         }
 
@@ -374,14 +420,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_5 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_5 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_5 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_5 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_5 multiplier. Please provide a positive double.");
             }
         }
 
@@ -391,14 +437,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_6 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_6 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_6 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_6 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_6 multiplier. Please provide a positive double.");
             }
         }
 
@@ -408,14 +454,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_7 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_7 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_7 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_7 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_7 multiplier. Please provide a positive double.");
             }
         }
 
@@ -425,14 +471,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_8 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_8 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_8 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_8 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_8 multiplier. Please provide a positive double.");
             }
         }
 
@@ -442,14 +488,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_9 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_9 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_9 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_9 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_9 multiplier. Please provide a positive double.");
             }
         }
 
@@ -459,14 +505,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double multiplier) && multiplier is >= 0 and <= 1)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double multiplier) && multiplier is >= 0 and <= 1)
             {
                 top10_10 = multiplier;
-                SharpTimerConPrint($"SharpTimer top10_10 multiplier set to {multiplier}");
+                Utils.LogDebug($"SharpTimer top10_10 multiplier set to {multiplier}");
             }
             else
             {
-                SharpTimerConPrint("Invalid top10_10 multiplier. Please provide a positive double.");
+                Utils.LogError("Invalid top10_10 multiplier. Please provide a positive double.");
             }
         }
 
@@ -476,14 +522,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double percentile) && percentile is >= 0 and <= 100)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double percentile) && percentile is >= 0 and <= 100)
             {
                 group1 = percentile;
-                SharpTimerConPrint($"SharpTimer group #1 percentile set to {percentile}");
+                Utils.LogDebug($"SharpTimer group #1 percentile set to {percentile}");
             }
             else
             {
-                SharpTimerConPrint("Invalid group #1 percentile. Please provide a positive double.");
+                Utils.LogError("Invalid group #1 percentile. Please provide a positive double.");
             }
         }
 
@@ -493,14 +539,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double percentile) && percentile is >= 0 and <= 100)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double percentile) && percentile is >= 0 and <= 100)
             {
                 group2 = percentile;
-                SharpTimerConPrint($"SharpTimer group #2 percentile set to {percentile}");
+                Utils.LogDebug($"SharpTimer group #2 percentile set to {percentile}");
             }
             else
             {
-                SharpTimerConPrint("Invalid group #2 percentile. Please provide a positive double.");
+                Utils.LogError("Invalid group #2 percentile. Please provide a positive double.");
             }
         }
 
@@ -510,14 +556,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double percentile) && percentile is >= 0 and <= 100)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double percentile) && percentile is >= 0 and <= 100)
             {
                 group3 = percentile;
-                SharpTimerConPrint($"SharpTimer group #3 percentile set to {percentile}");
+                Utils.LogDebug($"SharpTimer group #3 percentile set to {percentile}");
             }
             else
             {
-                SharpTimerConPrint("Invalid group #3 percentile. Please provide a positive double.");
+                Utils.LogError("Invalid group #3 percentile. Please provide a positive double.");
             }
         }
 
@@ -527,14 +573,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double percentile) && percentile is >= 0 and <= 100)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double percentile) && percentile is >= 0 and <= 100)
             {
                 group4 = percentile;
-                SharpTimerConPrint($"SharpTimer group #4 percentile set to {percentile}");
+                Utils.LogDebug($"SharpTimer group #4 percentile set to {percentile}");
             }
             else
             {
-                SharpTimerConPrint("Invalid group #4 percentile. Please provide a positive double.");
+                Utils.LogError("Invalid group #4 percentile. Please provide a positive double.");
             }
         }
 
@@ -544,14 +590,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double percentile) && percentile is >= 0 and <= 100)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double percentile) && percentile is >= 0 and <= 100)
             {
                 group5 = percentile;
-                SharpTimerConPrint($"SharpTimer group #5 percentile set to {percentile}");
+                Utils.LogDebug($"SharpTimer group #5 percentile set to {percentile}");
             }
             else
             {
-                SharpTimerConPrint("Invalid group #5 percentile. Please provide a positive double.");
+                Utils.LogError("Invalid group #5 percentile. Please provide a positive double.");
             }
         }
 
@@ -582,11 +628,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int mxLength) && mxLength > 0)
             {
                 maxReplayFrames = (int)(mxLength * 64);
-                SharpTimerConPrint($"SharpTimer max replay length set to {mxLength} seconds.");
+                Utils.LogDebug($"SharpTimer max replay length set to {mxLength} seconds.");
             }
             else
             {
-                SharpTimerConPrint("Invalid max replay length value. Please provide a positive int.");
+                Utils.LogError("Invalid max replay length value. Please provide a positive int.");
             }
         }
 
@@ -613,6 +659,15 @@ namespace SharpTimer
 
             replayBotName = $"{args}";
         }
+        
+        [ConsoleCommand("sharptimer_replays_use_binary", "Save replays as binary files instead of json. Default value: true")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerReplaysUseBinary(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            useBinaryReplays = bool.TryParse(args, out bool useBinaryReplaysValue) ? useBinaryReplaysValue : args != "0" && useBinaryReplays;
+        }
 
         /*[ConsoleCommand("sharptimer_vip_gif_host", "URL where VIP gifs are being hosted on. Default: 'https://files.catbox.moe'")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
@@ -627,77 +682,9 @@ namespace SharpTimer
             }
 
             vipGifHost = $"{args}";
-        }*/
-
-        [ConsoleCommand("sharptimer_jumpstats_enabled", "Whether JumpStats are enabled or not. Default value: false")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerJumpStatsConvar(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString;
-
-            jumpStatsEnabled = bool.TryParse(args, out bool jumpStatsEnabledValue) ? jumpStatsEnabledValue : args != "0" && jumpStatsEnabled;
         }
 
-        [ConsoleCommand("sharptimer_jumpstats_min_distance", "Defines the minimum distance for a jumpstat to be printed to chat. Default value: 175.0")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerJumpStatsMinDistConvar(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString;
-
-            if (float.TryParse(args, NumberStyles.Any, culture, out float dist) && dist > 0)
-            {
-                jumpStatsMinDist = dist;
-                SharpTimerConPrint($"SharpTimer JumpStats min distance set to {dist} units.");
-            }
-            else
-            {
-                SharpTimerConPrint("Invalid JumpStats min distance value. Please provide a positive float.");
-            }
-        }
-
-        [ConsoleCommand("sharptimer_jumpstats_max_vert", "Defines the max vertical distance for a jumpstat to not be printed to chat. Default value: 32.0")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerJumpStatsMaxVertConvar(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString;
-
-            if (float.TryParse(args, NumberStyles.Any, culture, out float dist) && dist > 0)
-            {
-                jumpStatsMaxVert = dist;
-                SharpTimerConPrint($"SharpTimer JumpStats max vert distance set to {dist} units.");
-            }
-            else
-            {
-                SharpTimerConPrint("Invalid JumpStats max vert distance value. Please provide a positive float.");
-            }
-        }
-
-        [ConsoleCommand("sharptimer_jumpstats_movement_unlocker_cap", "Intended for taming movement unlocker, caps speed on the second tick of a player being on the ground. Default value: true")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerJumpStatsUnlockerCapConvar(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString;
-
-            movementUnlockerCapEnabled = bool.TryParse(args, out bool movementUnlockerCapEnabledValue) ? movementUnlockerCapEnabledValue : args != "0" && movementUnlockerCapEnabled;
-        }
-
-        [ConsoleCommand("sharptimer_jumpstats_movement_unlocker_cap_value", "Speed cap value which will kick in on the second tick of the player being on the ground. Default value: 250.0")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerJumpStatsUnlockerCapValueConvar(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString;
-
-            if (float.TryParse(args, NumberStyles.Any, culture, out float value) && value > 0)
-            {
-                movementUnlockerCapValue = value;
-                if (movementUnlockerCapEnabled) SharpTimerConPrint($"SharpTimer JumpStats Movement Unlocker cap value set to {value} units.");
-            }
-            else
-            {
-                SharpTimerConPrint("Invalid JumpStats Movement Unlocker cap value. Please provide a positive float.");
-            }
-        }
-
+        // Global API is intentionally disabled, apiKey is forced blank. Preserved for posterity.
         [ConsoleCommand("sharptimer_global_cache_interval", "Refresh interval of record and point caching. Default value: 120")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
         public void SharpTimerGlobalCacheConvar(CCSPlayerController? player, CommandInfo command)
@@ -707,11 +694,29 @@ namespace SharpTimer
             if (int.TryParse(args, out int value) && value > 0)
             {
                 globalCacheInterval = value;
-                SharpTimerConPrint($"SharpTimer global cache refresh interval set to {value} seconds.");
+                Utils.LogDebug($"SharpTimer global cache refresh interval set to {value} seconds.");
             }
             else
             {
-                SharpTimerConPrint("Invalid global ache refresh interval value. Please provide a positive float.");
+                Utils.LogError("Invalid global cache refresh interval value. Please provide a positive value.");
+            }
+        }
+        */
+        
+        [ConsoleCommand("sharptimer_record_cache_interval", "Total timespan in which records will be cached. Default value : 60")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerRecordCacheConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (int.TryParse(args, out int value) && value > 0)
+            {
+                recordCacheInterval = value;
+                Utils.LogDebug($"SharpTimer record cache refresh interval set to {value} seconds.");
+            }
+            else
+            {
+                Utils.LogError("Invalid record cache refresh interval value. Please provide a positive value.");
             }
         }
 
@@ -759,11 +764,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int secs) && secs >= 0)
             {
                 afkSeconds = secs;
-                SharpTimerConPrint($"SharpTimer afk period: {secs}s");
+                Utils.LogDebug($"SharpTimer afk period: {secs}s");
             }
             else
             {
-                SharpTimerConPrint("Invalid afk period. Please provide a positive integer.");
+                Utils.LogError("Invalid afk period. Please provide a positive integer.");
             }
         }
 
@@ -776,11 +781,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int tickrate) && tickrate >= 0 && tickrate <= 64)
             {
                 hudTickrate = tickrate;
-                SharpTimerConPrint($"SharpTimer hud updates per second: {tickrate}");
+                Utils.LogDebug($"SharpTimer hud updates per second: {tickrate}");
             }
             else
             {
-                SharpTimerConPrint("Invalid HUD updates per second. Please provide a positive integer below 64.");
+                Utils.LogError("Invalid HUD updates per second. Please provide a positive integer below 64.");
             }
         }
 
@@ -858,7 +863,7 @@ namespace SharpTimer
 
         [ConsoleCommand("sharptimer_debug_enabled", "Default value: false")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerConPrintConvar(CCSPlayerController? player, CommandInfo command)
+        public void ConPrintConvar(CCSPlayerController? player, CommandInfo command)
         {
             string args = command.ArgString;
 
@@ -874,6 +879,7 @@ namespace SharpTimer
             disableRemoteData = bool.TryParse(args, out bool value) ? value : args != "0" && disableRemoteData;
         }
 
+        /*
         [ConsoleCommand("sharptimer_global_api_key", "Global api key")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
         public void SharpTimerAPIKeyConvar(CCSPlayerController? player, CommandInfo command)
@@ -887,6 +893,261 @@ namespace SharpTimer
             }
 
             apiKey = $"{args}";
+        }
+        */
+        [ConsoleCommand("sharptimer_default_mode", "Set default mode for all players on connect")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerDefaultModeConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString.Trim();
+
+            if (TryParseMode(args.ToLower(), out Mode newMode))
+            {
+                defaultMode = newMode;
+                Utils.LogDebug($"Default mode set to: {GetModeName(defaultMode)}");
+            }
+            else
+            {
+                Utils.LogError($"Invalid mode: {args}");
+            }
+        }
+        
+        [ConsoleCommand("sharptimer_enable_standard_mode", "Enable or disable standard mode. Default value: true")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerEnableStandardModeConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (!(bool.TryParse(args, out bool value) ? value : args != "0"))
+                ModeManager.DisableMode(Mode.Standard);
+        }
+        
+        [ConsoleCommand("sharptimer_enable_85t_mode", "Enable or disable 85t mode. Default value: true")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerEnable85tModeConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (!(bool.TryParse(args, out bool value) ? value : args != "0"))
+                ModeManager.DisableMode(Mode._85t);
+        }
+        
+        [ConsoleCommand("sharptimer_enable_102t_mode", "Enable or disable 102t mode. Default value: true")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerEnable102tModeConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (!(bool.TryParse(args, out bool value) ? value : args != "0"))
+                ModeManager.DisableMode(Mode._102t);
+        }
+        
+        [ConsoleCommand("sharptimer_enable_128t_mode", "Enable or disable 128t mode. Default value: true")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerEnable128tModeConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (!(bool.TryParse(args, out bool value) ? value : args != "0"))
+                ModeManager.DisableMode(Mode._128t);
+        }
+        
+        [ConsoleCommand("sharptimer_enable_source_mode", "Enable or disable source mode. Default value: true")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerEnableSourceModeConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (!(bool.TryParse(args, out bool value) ? value : args != "0"))
+                ModeManager.DisableMode(Mode.Source);
+        }
+        
+        [ConsoleCommand("sharptimer_enable_bhop_mode", "Enable or disable bhop mode. Default value: true")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerEnableBhopModeConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (!(bool.TryParse(args, out bool value) ? value : args != "0"))
+                ModeManager.DisableMode(Mode.Bhop);
+        }
+        
+        [ConsoleCommand("sharptimer_enable_custom_mode", "Enable or disable custom mode. Default value: true")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerEnableCustomModeConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (!(bool.TryParse(args, out bool value) ? value : args != "0"))
+                ModeManager.DisableMode(Mode.Custom);
+        }
+        
+        [ConsoleCommand("sharptimer_mode_multiplier_standard", "Point modifier for standard mode. Default value: 1")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerStandardModeMultiplierConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            {
+                standardModeModifier = pointModifier;
+                Utils.LogDebug($"SharpTimer standard mode point modifier set to {pointModifier}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid standard mode point modifier. Please provide a positive integer.");
+            }
+        }
+        
+        [ConsoleCommand("sharptimer_mode_multiplier_85t", "Point modifier for 85t mode. Default value: 0.9")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimer85tModeMultiplierConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            {
+                _85tModeModifier = pointModifier;
+                Utils.LogDebug($"SharpTimer 85t mode point modifier set to {pointModifier}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid 85t mode point modifier. Please provide a positive integer.");
+            }
+        }
+        
+        [ConsoleCommand("sharptimer_mode_multiplier_102t", "Point modifier for 102t mode. Default value: 0.85")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerArcadeModeMultiplierConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            {
+                _102tModeModifier = pointModifier;
+                Utils.LogDebug($"SharpTimer 102t mode point modifier set to {pointModifier}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid 102t mode point modifier. Please provide a positive integer.");
+            }
+        }
+        
+        [ConsoleCommand("sharptimer_mode_multiplier_128t", "Point modifier for 128t mode. Default value: 0.8")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimer128tModeMultiplierConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            {
+                _128tModeModifier = pointModifier;
+                Utils.LogDebug($"SharpTimer 128t mode point modifier set to {pointModifier}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid 128t mode point modifier. Please provide a positive integer.");
+            }
+        }
+        
+        [ConsoleCommand("sharptimer_mode_multiplier_source", "Point modifier for source mode. Default value: 1.1")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerSourceModeMultiplierConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            {
+                sourceModeModifier = pointModifier;
+                Utils.LogDebug($"SharpTimer source mode point modifier set to {pointModifier}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid source mode point modifier. Please provide a positive integer.");
+            }
+        }
+        [ConsoleCommand("sharptimer_mode_multiplier_bhop", "Point modifier for bhop mode. Default value: 0.8")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerBhopModeMultiplierConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            {
+                bhopModeModifier = pointModifier;
+                Utils.LogDebug($"SharpTimer bhop mode point modifier set to {pointModifier}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid bhop mode point modifier. Please provide a positive integer.");
+            }
+        }
+        
+        [ConsoleCommand("sharptimer_mode_custom_aa", "Custom airaccelerate float. Default value: 150")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerCustomAirAccelConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (float.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out float custom) && custom is >= 0)
+            {
+                customAirAccel = custom;
+                Utils.LogDebug($"SharpTimer custom airaccel set to {custom}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid custom airaccel. Please provide a positive integer.");
+            }
+        }
+        [ConsoleCommand("sharptimer_mode_custom_accel", "Custom accel float. Default value: 10")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerCustomAccelConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (float.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out float custom) && custom is >= 0)
+            {
+                customAccel = custom;
+                Utils.LogDebug($"SharpTimer custom accel set to {custom}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid custom accel. Please provide a positive integer.");
+            }
+        }
+        
+        [ConsoleCommand("sharptimer_mode_custom_wishspeed", "Custom wishspeed float. Default value: 30")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerCustomWishspeedConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (float.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out float custom) && custom is >= 0)
+            {
+                customWishSpeed = custom;
+                Utils.LogDebug($"SharpTimer custom wishspeed set to {custom}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid custom wishspeed. Please provide a positive integer.");
+            }
+        }
+        
+        [ConsoleCommand("sharptimer_mode_custom_friction", "Custom friction float. Default value: 5.2")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerCustomFrictionConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            if (float.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out float custom) && custom is >= 0)
+            {
+                customFriction = custom;
+                Utils.LogDebug($"SharpTimer custom friction set to {custom}.");
+            }
+            else
+            {
+                Utils.LogError("Invalid custom friction. Please provide a positive integer.");
+            }
         }
 
         [ConsoleCommand("sharptimer_enable_checkpoint_verification", "Enable or disable checkpoint verification system. Default value: true")]
@@ -906,20 +1167,14 @@ namespace SharpTimer
 
             applyInfiniteAmmo = bool.TryParse(args, out bool value) ? value : args != "0" && applyInfiniteAmmo;
         }
-        
-        [ConsoleCommand("sharptimer_stage_times_path", "Path to the stage times folder. Default value : csgo cfg SharpTimer PlayerStageData")]
+
+        [ConsoleCommand("sharptimer_print_start_speed", "Whether the start speed should be printed to chat when the player leaves the start zone. Default value: true")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerStageTimesPathConvar(CCSPlayerController? player, CommandInfo command)
+        public void SharpTimerPrintStartSpeed(CCSPlayerController? player, CommandInfo command)
         {
-            string args = command.ArgString.Trim();
+            string args = command.ArgString;
 
-            if (string.IsNullOrEmpty(args))
-            {
-                playerStagesPath = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerStageData");
-                return;
-            }
-
-            playerStagesPath = Path.Join(gameDir, args);
+            printStartSpeedEnabled = bool.TryParse(args, out bool value) ? value : args != "0" && printStartSpeedEnabled;
         }
 
         [ConsoleCommand("sharptimer_use2Dspeed_enabled", "Default value: false")]
@@ -1030,14 +1285,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (float.TryParse(args, NumberStyles.Any, culture, out float cooldown) && cooldown > 0)
+            if (float.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out float cooldown) && cooldown > 0)
             {
-                cmdCooldown = (int)(cooldown * 64);
-                SharpTimerConPrint($"SharpTimer command cooldown set to {cooldown} seconds.");
+                cmdCooldown = cooldown;
+                Utils.LogDebug($"SharpTimer command cooldown set to {cooldown} seconds.");
             }
             else
             {
-                SharpTimerConPrint("Invalid command cooldown value. Please provide a positive float.");
+                Utils.LogError("Invalid command cooldown value. Please provide a positive float.");
             }
         }
 
@@ -1047,14 +1302,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (float.TryParse(args, NumberStyles.Any, culture, out float time) && time > 0)
+            if (float.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out float time) && time > 0)
             {
                 bhopBlockTime = (int)(time * 64);
-                SharpTimerConPrint($"SharpTimer max bhop block time set to {time} seconds.");
+                Utils.LogDebug($"SharpTimer max bhop block time set to {time} seconds.");
             }
             else
             {
-                SharpTimerConPrint("Invalid max bhop block time value. Please provide a positive float.");
+                Utils.LogError("Invalid max bhop block time value. Please provide a positive float.");
             }
         }
 
@@ -1168,6 +1423,15 @@ namespace SharpTimer
 
             resetTriggerTeleportSpeedEnabled = bool.TryParse(args, out bool resetTriggerTeleportSpeedEnabledValue) ? resetTriggerTeleportSpeedEnabledValue : args != "0" && resetTriggerTeleportSpeedEnabled;
         }
+        
+        [ConsoleCommand("sharptimer_startzone_single_jump", "When true, players are only allowed to jump once in the startzone. Default value: false")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerStartzoneSingleJumpBoolConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            startzoneSingleJumpEnabled = bool.TryParse(args, out bool value) ? value : args != "0" && startzoneSingleJumpEnabled;
+        }
 
         [ConsoleCommand("sharptimer_max_start_speed_enabled", "Whether the players speed should be limited on exiting the starting trigger or not. Default value: false")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
@@ -1187,12 +1451,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int speed) && speed > 0)
             {
                 maxStartingSpeed = speed;
-                Server.ExecuteCommand($"sv_maxspeed {maxStartingSpeed}");
-                SharpTimerConPrint($"SharpTimer max trigger speed set to {speed}.");
+                Utils.LogDebug($"SharpTimer max trigger speed set to {speed}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid max trigger speed value. Please provide a positive integer.");
+                Utils.LogError("Invalid max trigger speed value. Please provide a positive integer.");
             }
         }
 
@@ -1205,11 +1468,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int speed) && speed > 0)
             {
                 maxBonusStartingSpeed = speed;
-                SharpTimerConPrint($"SharpTimer max bonus trigger speed set to {speed}.");
+                Utils.LogDebug($"SharpTimer max bonus trigger speed set to {speed}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid max bonus trigger speed value. Please provide a positive integer.");
+                Utils.LogError("Invalid max bonus trigger speed value. Please provide a positive integer.");
             }
         }
 
@@ -1231,11 +1494,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int speed) && speed > 0)
             {
                 forcedPlayerSpeed = speed;
-                SharpTimerConPrint($"SharpTimer forced player speed set to {speed}.");
+                Utils.LogDebug($"SharpTimer forced player speed set to {speed}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid forced player speed value. Please provide a positive integer.");
+                Utils.LogError("Invalid forced player speed value. Please provide a positive integer.");
             }
         }
 
@@ -1248,11 +1511,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int bhopTicks) && bhopTicks > 0)
             {
                 bhopBlockTime = bhopTicks;
-                SharpTimerConPrint($"SharpTimer forced bhop_block ticks to {bhopTicks}.");
+                Utils.LogDebug($"SharpTimer forced bhop_block ticks to {bhopTicks}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid bhop_block ticks value. Please provide a positive integer.");
+                Utils.LogError("Invalid bhop_block ticks value. Please provide a positive integer.");
             }
         }
 
@@ -1263,6 +1526,15 @@ namespace SharpTimer
             string args = command.ArgString;
 
             enableStageTimes = bool.TryParse(args, out bool enableStageTimesValue) ? enableStageTimesValue : args != "0" && enableStageTimes;
+        }
+
+        [ConsoleCommand("sharptimer_stage_sr_enabled", "Whether stage time server records are enabled by default or not. Default value: true")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerStageServerRecordConvar(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            enableStageSR = bool.TryParse(args, out bool enableStageSRValue) ? enableStageSRValue : args != "0" && enableStageSRValue;
         }
 
         [ConsoleCommand("sharptimer_connect_commands_msg_enabled", "Whether commands on join messages are enabled by default or not. Default value: true")]
@@ -1320,11 +1592,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int interval) && interval > 0)
             {
                 adServerRecordTimer = interval;
-                SharpTimerConPrint($"SharpTimer sr ad interval set to {interval} seconds.");
+                Utils.LogDebug($"SharpTimer sr ad interval set to {interval} seconds.");
             }
             else
             {
-                SharpTimerConPrint("Invalid sr ad interval value. Please provide a positive integer.");
+                Utils.LogError("Invalid sr ad interval value. Please provide a positive integer.");
             }
         }
 
@@ -1346,11 +1618,11 @@ namespace SharpTimer
             if (int.TryParse(args, out int interval) && interval > 0)
             {
                 adMessagesTimer = interval;
-                SharpTimerConPrint($"SharpTimer messages ad interval set to {interval} seconds.");
+                Utils.LogDebug($"SharpTimer messages ad interval set to {interval} seconds.");
             }
             else
             {
-                SharpTimerConPrint("Invalid messages ad interval value. Please provide a positive integer.");
+                Utils.LogError("Invalid messages ad interval value. Please provide a positive integer.");
             }
         }
         /* ad messages */
@@ -1415,14 +1687,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (float.TryParse(args, NumberStyles.Any, culture, out float height) && height > 0)
+            if (float.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out float height) && height > 0)
             {
                 fakeTriggerHeight = height;
-                SharpTimerConPrint($"SharpTimer fake trigger height set to {height} units.");
+                Utils.LogDebug($"SharpTimer fake trigger height set to {height} units.");
             }
             else
             {
-                SharpTimerConPrint("Invalid fake trigger height value. Please provide a positive integer.");
+                Utils.LogError("Invalid fake trigger height value. Please provide a positive integer.");
             }
         }
 
@@ -1461,6 +1733,15 @@ namespace SharpTimer
             string args = command.ArgString;
 
             soundsEnabledByDefault = bool.TryParse(args, out bool soundsEnabledByDefaultValue) ? soundsEnabledByDefaultValue : args != "0" && soundsEnabledByDefault;
+        }
+
+        [ConsoleCommand("sharptimer_enable_soundevents", "Whether to enable soundevents. Default value: false")]
+        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void SharpTimerSoundEventsEnable(CCSPlayerController? player, CommandInfo command)
+        {
+            string args = command.ArgString;
+
+            soundeventsEnabled = bool.TryParse(args, out bool soundeventsEnabledValue) ? soundeventsEnabledValue : args != "0" && soundeventsEnabledValue;
         }
 
         [ConsoleCommand("sharptimer_sound_timer", "Defines Timer sound. Default value: sounds/ui/counter_beep.vsnd")]
@@ -1592,14 +1873,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 parachutePointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer parachute point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer parachute point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid parachute point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid parachute point modifier. Please provide a positive integer.");
             }
         }
         
@@ -1609,14 +1890,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 tasPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer TAS point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer TAS point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid TAS point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid TAS point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1626,14 +1907,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 lowgravPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer low grav point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer low grav point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid low grav point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid low grav point modifier. Please provide a positive integer.");
             }
         }
         [ConsoleCommand("sharptimer_style_multiplier_sideways", "Point modifier for sidways. Default value: 1.3")]
@@ -1642,14 +1923,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 sidewaysPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer sideways point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer sideways point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid sideways point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid sideways point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1659,14 +1940,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 onlywPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer onlyw point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer onlyw point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid onlyw point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid onlyw point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1676,14 +1957,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 onlyaPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer onlya point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer onlya point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid onlya point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid onlya point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1693,14 +1974,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 onlysPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer onlys point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer onlys point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid onlys point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid onlys point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1710,14 +1991,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 onlydPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer onlyd point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer onlyd point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid onlyd point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid onlyd point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1727,14 +2008,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 velPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer 400vel point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer 400vel point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid 400vel point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid 400vel point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1744,14 +2025,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 highgravPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer highgrav point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer highgrav point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid highgrav point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid highgrav point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1761,14 +2042,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 halfSidewaysPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer halfsideways point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer halfsideways point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid halfsideways point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid halfsideways point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1778,14 +2059,14 @@ namespace SharpTimer
         {
             string args = command.ArgString;
 
-            if (double.TryParse(args, NumberStyles.Any, culture, out double pointModifier) && pointModifier is >= 0 and <= 2)
+            if (double.TryParse(args, NumberStyles.Any, CultureInfo.InvariantCulture, out double pointModifier) && pointModifier is >= 0 and <= 2)
             {
                 fastForwardPointModifier = pointModifier;
-                SharpTimerConPrint($"SharpTimer fastforward point modifier set to {pointModifier}.");
+                Utils.LogDebug($"SharpTimer fastforward point modifier set to {pointModifier}.");
             }
             else
             {
-                SharpTimerConPrint("Invalid fastforward point modifier. Please provide a positive integer.");
+                Utils.LogError("Invalid fastforward point modifier. Please provide a positive integer.");
             }
         }
 
@@ -1805,22 +2086,6 @@ namespace SharpTimer
             remoteBhopDataSource = $"{args}";
         }
 
-        [ConsoleCommand("sharptimer_remote_data_kz", "Override for kz remote_data")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerRemoteDataOverrideKZ(CCSPlayerController? player, CommandInfo command)
-        {
-
-            string args = command.ArgString.Trim();
-
-            if (string.IsNullOrEmpty(args))
-            {
-                remoteKZDataSource = $"https://raw.githubusercontent.com/Letaryat/poor-SharpTimer/main/remote_data/kz_.json";
-                return;
-            }
-
-            remoteKZDataSource = $"{args}";
-        }
-
         [ConsoleCommand("sharptimer_remote_data_surf", "Override for surf remote_data")]
         [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
         public void SharpTimerRemoteDataOverrideSurf(CCSPlayerController? player, CommandInfo command)
@@ -1835,30 +2100,6 @@ namespace SharpTimer
             }
 
             remoteSurfDataSource = $"{args}";
-        }
-        
-        [ConsoleCommand("sharptimer_replay_data_directory", "Directory for replay data. Prepended with game dir. Default value: csgo/cfg/SharpTimer/PlayerReplayData")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerReplayDataDirectory(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString.Trim();
-            
-            if (string.IsNullOrEmpty(args))
-            {
-                playerReplaysPath = Path.Join(gameDir, "csgo", "cfg", "SharpTimer", "PlayerReplayData");
-                return;
-            }
-            
-            playerReplaysPath = Path.Join([gameDir, ..args.Split('/')]);
-        }
-        
-        [ConsoleCommand("sharptimer_replays_use_binary", "Save replays as binary files instead of json. Default value: false")]
-        [CommandHelper(whoCanExecute: CommandUsage.SERVER_ONLY)]
-        public void SharpTimerReplaysUseBinary(CCSPlayerController? player, CommandInfo command)
-        {
-            string args = command.ArgString;
-
-            useBinaryReplays = bool.TryParse(args, out bool useBinaryReplaysValue) ? useBinaryReplaysValue : args != "0" && useBinaryReplays;
         }
     }
 }

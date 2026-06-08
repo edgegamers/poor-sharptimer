@@ -16,7 +16,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using System.Text.Json.Serialization;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
+using SharpTimerAPI;
+using SharpTimerAPI.Events;
+using FixVectorLeak;
 
 namespace SharpTimer
 {
@@ -25,14 +29,11 @@ namespace SharpTimer
     {
         public List<CBaseTrigger> Triggers { get; private set; }
         public List<CInfoTeleportDestination> InfoTeleportDestinations { get; private set; }
-        public List<CPointEntity> InfoTargetEntities { get; private set; }
 
         public EntityCache()
         {
-            Triggers = [];
-            InfoTeleportDestinations = [];
-            InfoTargetEntities = [];
-            UpdateCache();
+            Triggers = new();
+            InfoTeleportDestinations = new();
         }
 
         public void UpdateCache()
@@ -44,8 +45,31 @@ namespace SharpTimer
 
     public class RecordCache
     {
-        public Dictionary<int, PlayerRecord>? CachedWorldRecords { get; set; }
-        public List<PlayerPoints>? CachedGlobalPoints { get; set; }
+        public Dictionary<int, GlobalRecord>? CachedStandardWorldRecords { get; set; } = new();
+        public Dictionary<int, GlobalRecord>? Cached85tWorldRecords { get; set; } = new();
+        public Dictionary<int, GlobalRecord>? Cached102tWorldRecords { get; set; } = new();
+        public Dictionary<int, GlobalRecord>? Cached128tWorldRecords { get; set; } = new();
+        public Dictionary<int, GlobalRecord>? CachedSourceWorldRecords { get; set; } = new();
+        public Dictionary<int, GlobalRecord>? CachedBhopWorldRecords { get; set; } = new();
+        public List<PlayerPoints>? CachedGlobalPoints { get; set; } = new();
+    }
+
+    public class PlayerCache
+    {
+        public Dictionary<int, int> PlayerID { get; set; } = new();
+    }
+
+    public class ServerCache
+    {
+        public int ServerID { get; set; }
+    }
+
+    public class MapCache
+    {
+        public int MapID { get; set; }
+        public long AddonID { get; set; }
+        public string MapName { get; set; } = string.Empty;
+        public bool Verified { get; set; }
     }
 
     // MapData JSON
@@ -125,13 +149,8 @@ namespace SharpTimer
         public CurrentZoneInfo CurrentZoneInfo { get; set; } = new();
         public int currentStyle { get; set; }
         public bool changedStyle { get; set; }
-
-        public CurrentMode Mode { get; set; }
-        public enum CurrentMode
-        {
-            Classic,
-            Arcade
-        }
+        public int StartZoneJumps { get; set; }
+        public bool WasOnGroundLastTick { get; set; }
 
         //replay
         public bool IsReplaying { get; set; }
@@ -161,7 +180,7 @@ namespace SharpTimer
         public double Sync { get; set; }
         public int GoodSync { get; set; }
         public int TotalSync { get; set; }
-        public List<QAngle> Rotation { get; set; } = new List<QAngle>();
+        public List<QAngle_t> Rotation { get; set; } = new List<QAngle_t>();
 
         //player settings/stats
         public bool Azerty { get; set; }
@@ -169,14 +188,15 @@ namespace SharpTimer
         public bool HideKeys { get; set; }
         public bool HidePlayers { get; set; }
         public bool HideWeapon { get; set; }
+        public bool HideChatSpeed { get; set; }
+        public string Mode { get; set; } = "Standard";
+        public bool ChangedMode { get; set; }
         public bool GivenWeapon { get; set; }
         public bool SoundsEnabled { get; set; }
         public bool BindsDisabled { get; set; }
-        public bool HideJumpStats { get; set; }
         public int PlayerFov { get; set; }
         public int TimesConnected { get; set; }
-        public int TicksSinceLastCmd { get; set; }
-        public int TicksSinceLastRankUpdate { get; set; }
+        public DateTime CmdCooldown { get; set; }
 
         //super special stuff for testers
         public bool IsTester { get; set; }
@@ -208,6 +228,9 @@ namespace SharpTimer
         //set respawn
         public string? SetRespawnPos { get; set; }
         public string? SetRespawnAng { get; set; }
+        //api stuff
+        public bool RespawnCmdBlocked { get; set; }
+        public bool TimerCmdBlocked { get; set; }
 
         public class ViewAngle
         {
@@ -215,7 +238,7 @@ namespace SharpTimer
             public float Y { get; set; }
             public float Z { get; set; }
 
-            public ViewAngle (QAngle angles)
+            public ViewAngle (QAngle_t angles)
             {
                 X = angles.X;
                 Y = angles.Y;
@@ -247,45 +270,6 @@ namespace SharpTimer
         public int CurrentBonusNumber { get; set; }
     }
 
-    public class PlayerJumpStats
-    {
-        public int FramesOnGround { get; set; }
-        public int LastFramesOnGround { get; set; }
-        public bool OnGround { get; set; }
-        public bool LastOnGround { get; set; }
-        public string? LastPosOnGround { get; set; }
-        public string? LastSpeed { get; set; }
-        public string? JumpPos { get; set; }
-        public string? OldJumpPos { get; set; }
-        public string? JumpSpeed { get; set; }
-        public bool Jumped { get; set; }
-        public string? LastJumpType { get; set; }
-        public bool LastDucked { get; set; }
-        public bool LandedFromSound { get; set; }
-        public bool LastLandedFromSound { get; set; }
-        public int WTicks { get; set; }
-
-        public List<IFrame> jumpFrames { get; set; } = new List<IFrame>();
-        public List<IFrame> timerSyncFrames { get; set; } = new List<IFrame>();
-        public class IFrame
-        {
-            public string? PositionString { get; set; }
-            public string? RotationString { get; set; }
-            public string? SpeedString { get; set; }
-            public double MaxSpeed { get; set; }
-            public double MaxHeight { get; set; }
-            public bool LastLeft { get; set; }
-            public bool LastRight { get; set; }
-            public bool LastLeftRight { get; set; }
-        }
-
-        public List<JumpInterp> jumpInterp { get; set; } = [];
-        public class JumpInterp
-        {
-            public string? InterpString { get; set; }
-        }
-    }
-
     public class PlayerBonusPlacementInfo
     {
         public string? Placement { get; set; }
@@ -311,7 +295,7 @@ namespace SharpTimer
             public MoveType_t MoveType { get; set; }
         }
     }
-
+    
     [Serializable]
     public class IndexedReplayFrames
     {
@@ -332,13 +316,13 @@ namespace SharpTimer
             Z = z;
         }
 
-        public static ReplayVector GetVectorish(Vector actualVector)
+        public static ReplayVector GetVectorish(Vector actualVector_t)
         {
-            return new ReplayVector(actualVector.X, actualVector.Y, actualVector.Z);
+            return new ReplayVector(actualVector_t.X, actualVector_t.Y, actualVector_t.Z);
         }
-        public static Vector ToVector(ReplayVector replayVector)
+        public static Vector ToVector(ReplayVector replayVector_t)
         {
-            return new Vector(replayVector.X, replayVector.Y, replayVector.Z);
+            return new Vector(replayVector_t.X, replayVector_t.Y, replayVector_t.Z);
         }
     }
 
@@ -355,14 +339,14 @@ namespace SharpTimer
             Roll = roll;
         }
 
-        public static ReplayQAngle GetQAngleish(QAngle actualQAngle)
+        public static ReplayQAngle GetQAngleish(QAngle actualQAngle_t)
         {
-            return new ReplayQAngle(actualQAngle.X, actualQAngle.Y, actualQAngle.Z);
+            return new ReplayQAngle(actualQAngle_t.X, actualQAngle_t.Y, actualQAngle_t.Z);
         }
 
-        public static QAngle ToQAngle(ReplayQAngle replayQAngle)
+        public static QAngle ToQAngle(ReplayQAngle replayQAngle_t)
         {
-            return new QAngle(replayQAngle.Pitch, replayQAngle.Yaw, replayQAngle.Roll);
+            return new QAngle(replayQAngle_t.Pitch, replayQAngle_t.Yaw, replayQAngle_t.Roll);
         }
     }
 
@@ -375,13 +359,29 @@ namespace SharpTimer
         public string? MapName { get; set; }
         public int TimerTicks { get; set; }
         public bool Replay { get; set; }
+        public int Completions { get; set; }
+    }
+    
+    public class GlobalRecord
+    {
+        public int record_id { get; set; }
+        public int player_id { get; set; }
+        public string player_name { get; set; } = string.Empty;
+        public int server_id { get; set; }
+        public int map_id { get; set; }
+        public int bonus { get; set; }
+        public string mode { get; set; } = string.Empty;
+        public string style { get; set; } = string.Empty;
+        public decimal time { get; set; }
+        public DateTimeOffset created_on { get; set; }
+        public bool replay { get; set; }
     }
 
     public class Record
     {
         public string? map_name { get; set; }
         public string? workshop_id { get; set; }
-        public string steamid { get; set; }
+        public string? steamid { get; set; }
         public string? player_name { get; set; }
         public int timer_ticks { get; set; }
         public string? formatted_time { get; set; }
@@ -399,8 +399,9 @@ namespace SharpTimer
     public class ReplayData
     {
         public int record_id { get; set; }
-        public string? map_name { get; set; }
-        public int style { get; set; }
+        public int map_id { get; set; }
+        public int bonus { get; set; }
+        public string mode { get; set; } = string.Empty;
         public string? hash { get; set; }
         public string? replay_data { get; set; }
     }
@@ -408,11 +409,13 @@ namespace SharpTimer
     // PlayerPoints for MySql
     public class PlayerPoints
     {
+        public string SteamID { get; set; } = string.Empty;
         public string? PlayerName { get; set; }
         public int GlobalPoints { get; set; }
+        public int Placement { get; set; }
     }
 
-    // KZ checkpoints
+    // Checkpoints
     public class PlayerCheckpoint
     {
         public string? PositionString { get; set; }
@@ -425,5 +428,15 @@ namespace SharpTimer
     {
         public Dictionary<int, int>? StageTimes { get; set; }
         public Dictionary<int, string>? StageVelos { get; set; }
+    }
+
+    // Trigger push
+    public class TriggerPushData(float pushSpeed, QAngle pushEntitySpace, Vector pushDirEntitySpace, Vector pushMins, Vector pushMaxs)
+    {
+        public float PushSpeed { get; set; } = pushSpeed;
+        public QAngle PushEntitySpace { get; set; } = pushEntitySpace;
+        public Vector PushDirEntitySpace { get; set; } = pushDirEntitySpace;
+        public Vector PushMins { get; set; } = pushMins;
+        public Vector PushMaxs { get; set; } = pushMaxs;
     }
 }
